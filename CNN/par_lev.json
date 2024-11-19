@@ -1,0 +1,15 @@
+{
+  "game_pars":
+    {
+      "col_wall":-5,
+      "loop":-10,
+      "scored":5,
+      "num_games":600,
+      "gamma":0.9,
+      "eps":400,
+      "lr":0.00001,
+      "close_f":0.1,
+      "far_f":-0.1,
+      "graph":"optimal_lr__0.00001_eps__400_gamma__0.9"
+    }
+}
