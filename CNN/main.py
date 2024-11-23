@@ -1,76 +1,202 @@
-import json
-from agent import Agent
-from game import Snake
+import torch
+from torch.utils.data import DataLoader
+from torchvision import transforms
+from model import CNN, QTrainer
 from settings import *
+from dataset import TestDataset, TrainingDataset
+from tqdm import tqdm
+import csv
+import matplotlib.pyplot as plt
 
 
-class Game:
+class Main:
     def __init__(self):
-        with open('par_lev.json', 'r') as file:
-            self.json_pars = json.load(file)
+        # 訓練數據轉換
+        self.transform = transforms.Compose([
+            transforms.Resize((32, 32)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        ])
 
-        self.pars = self.json_pars.get("game_pars")
-        self.train(self.pars)
+        # 加載數據集
+        self.train_dataset = TrainingDataset(root_dir=TRAIN_DATASET_DIR, transform=self.transform)
+        self.test_dataset = TestDataset(root_dir=TEST_DATASET_DIR, csv_file=TEST_CSV_FILE, transform=self.transform)
 
-    # Save run stats to a txt file at a specified path
-    def save_to_file(self, path, game_num, score, record):
+        # 定義 DataLoader
+        self.train_loader = DataLoader(dataset=self.train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+        self.test_loader = DataLoader(dataset=self.test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+
+        # 檢查數據加載
+        for images, labels in self.train_loader:
+            print(f"Images shape: {images.shape}, Labels shape: {labels.shape}")
+            break
+
+        # 檢查數據加載
+        for images, filenames in self.test_loader:
+            print(f"Images shape: {images.shape}")  # 批次圖像的形狀
+            print(f"Filenames: {filenames[:5]}")  # 顯示前 5 個文件名
+            break
+
+        # 初始化模型
+        self.model = CNN(input_channels=INPUT_CHANNELS,
+                         output_size=NUM_CLASSES,
+                         input_height=INPUT_HEIGHT,
+                         input_width=INPUT_WIDTH).to('cuda')
+
+        # 初始化 QTrainer
+        self.trainer = QTrainer(model_cnn=self.model, lr=LR, gamma=GAMMA)
+
+        self.patience = PATIENCE
+        self.no_improve_epochs = 0
+        self.best_avg_loss = float('inf')  # 初始化最佳驗證損失
+        self.avg_losses = []  # 保存每個 epoch 的平均 Loss
+
+    def main(self):
+
+        # 加載檢查點（如果有）
+        start_epoch, _ = self.trainer.load_checkpoint(CHECKPOINT_PATH)
+
+        # 訓練模型
+        self.train_model_with_step(self.trainer, self.train_loader, epochs=EPOCHS, checkpoint_path=CHECKPOINT_PATH,
+                                   start_epoch=start_epoch)
+
+        # 測試模型
+        self.test_model(self.model, self.test_loader)
+
+        # 保存模型
+        self.model.save("traffic_sign_cnn.pth")
+
+    def train_model_with_step(self, trainer, train_loader, epochs, checkpoint_path, start_epoch=0):
         """
-        Save the game, score, and record to a txt file.
+        使用 trainer 的 train_step 方法進行模型訓練
+        trainer: 包含模型、優化器與損失計算的封裝類（如 QTrainer）
+        train_loader: PyTorch DataLoader，提供訓練數據
+        epochs: 訓練週期數
         """
-        with open(path, "a+") as file:
-            file.write(f"{game_num} {score} {record}\n")
+        total_batches = len(train_loader)
+        for epoch in range(start_epoch, epochs):
+            trainer.model_cnn.train()  # 確保模型處於訓練模式
+            running_loss = 0.0
 
-    def train(self, pars):
+            # 使用 tqdm 包裝進度條
+            progress_bar = tqdm(train_loader, desc=f"Training Epoch {epoch + 1}", unit="batch")
+            for images, labels in progress_bar:
+                # 將數據轉移到 GPU（如果可用）
+                images, labels = images.to('cuda'), labels.to('cuda')
+
+                # 使用 train_step 處理單個批次
+                trainer.train_step(images, labels)
+
+                # 累計損失
+                running_loss += trainer.losses[-1]  # 獲取當前批次的損失
+
+                # 動態更新進度條後綴
+                progress_bar.set_postfix({"Batch Loss": trainer.losses[-1],
+                                          "Avg Loss": running_loss / total_batches})
+
+            current_avg_loss = running_loss / total_batches
+
+            self.avg_losses.append(current_avg_loss)
+
+            # 如果當前正確率是最高的，保存模型
+            if current_avg_loss < self.best_avg_loss:
+                self.best_avg_loss = current_avg_loss
+                self.no_improve_epochs = 0
+                trainer.save_checkpoint(epoch + 1, running_loss / total_batches, checkpoint_path)
+                print(f"New best model saved to {checkpoint_path}")
+            else:
+                self.no_improve_epochs += 1
+
+            if self.no_improve_epochs >= self.patience:
+                print(f"Early stopping triggered. Best Avg Loss: {self.best_avg_loss:.4f}")
+                break
+
+            # 每個 epoch 輸出平均損失
+            print(f"Epoch {epoch + 1}/{epochs}, Loss: {running_loss / total_batches:.4f}")
+
+        # 可視化損失與梯度變化
+        trainer.plot_losses()
+        trainer.plot_gradient_norms()
+        trainer.plot_parameter_gradient_norms()
+
+        self.plot_avg_losses(self.avg_losses)
+        # 保存平均 Loss 到文件
+        self.save_avg_losses(self.avg_losses, "avg_losses.csv")
+        print("Training completed. AVG Losses saved to avg_losses.csv.")
+
+    def save_avg_losses(self, avg_losses, file_path):
         """
-        Train game and run each step as
-        a sequence of frames.
+        保存每個 epoch 的平均 Loss 到 CSV 文件
+        avg_losses: 包含平均 Loss 的列表
+        file_path: 保存 CSV 文件的路徑
         """
-        # Initialize
-        record = 0
-        game = Snake()
-        agent = Agent(input_channels=1, output_size=OUTPUT_SIZE, input_height=10, input_width=10, pars=pars, show_plot_num=50)
+        with open(file_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Epoch", "AVG Loss"])  # 寫入標題
+            for epoch, loss in enumerate(avg_losses, start=1):
+                writer.writerow([epoch, loss])  # 寫入每一行
 
-        while True:
-            # Get game state (replace OpenCV logic with basic state extraction)
-            state_old = game.cnn_input()
+    def test_model(self, model, test_loader, output_csv=OUTPUT_CSV):
+        """
+        測試模型並保存結果到 CSV，包含進度條顯示
+        model: 測試的模型
+        test_loader: 測試數據的 DataLoader
+        output_csv: 保存測試結果的 CSV 文件路徑
+        """
+        model.eval()  # 設置模型為測試模式
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)  # 確保模型在正確的設備上
 
-            # Decide action based on state
-            final_move = agent.get_action(state_old)
+        # 初始化變量
+        correct = 0
+        total = 0
+        results = []  # 保存每個文件的測試結果
 
-            # Move the snake
-            reward, done, score = game.play_step(action=final_move, kwargs=pars)
+        # 加入 tqdm 顯示進度
+        with torch.no_grad():
+            with tqdm(total=len(test_loader), desc="Testing Progress", unit="batch") as pbar:
+                for images, labels in test_loader:
+                    images, labels = images.to(device), labels.to(device)
+                    outputs = model(images)
+                    _, predicted = torch.max(outputs.data, 1)  # 獲取預測類別
 
-            # Get the new state
-            state_new = game.cnn_input()
+                    # 記錄準確率計算
+                    total += labels.size(0)
+                    correct += (predicted == labels).sum().item()
 
-            # Train short memory
-            agent.train_short_memory(state_old, final_move, reward, state_new, done)
+                    # 保存真實類別和預測類別
+                    results.extend(zip(labels.cpu().numpy(), predicted.cpu().numpy()))
 
-            # Remember
-            agent.remember(state_old, final_move, reward, state_new, done)
+                    # 更新進度條
+                    pbar.update(1)
 
-            # End game condition
-            if pars.get('num_games', DEFAULT_END_GAME_POINT) != -1:
-                if agent.n_games > pars.get('num_games', DEFAULT_END_GAME_POINT):
-                    break
+        # 計算總體準確率
+        accuracy = 100 * correct / total
+        print(f"Test Accuracy: {accuracy:.2f}%")
 
-            # When the game is over
-            if done:
-                game.reset()
-                agent.n_games += 1
-                agent.train_long_memory()
+        # 保存結果到 CSV
+        with open(output_csv, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["TrueClass", "PredictedClass"])  # CSV 標題
+            writer.writerows(results)  # 寫入每行數據
 
-                # Update high score
-                if score > record:
-                    record = score
-                    agent.model_cnn.save()
+        print(f"Predictions saved to {output_csv}")
 
-                # Print game information
-                print('Game', agent.n_games, 'Score', score, 'Record:', record)
-
-                # Save game information
-                self.save_to_file(f"./{pars.get('graph', 'test')}.txt", agent.n_games, score, record)
+    def plot_avg_losses(self, avg_losses):
+        """
+        繪製平均 Loss 隨 epoch 的變化圖
+        avg_losses: 包含每個 epoch 平均 Loss 的列表
+        """
+        plt.figure(figsize=(10, 6))
+        plt.plot(range(1, len(avg_losses) + 1), avg_losses, marker='o', label="AVG Loss")
+        plt.xlabel("Epoch")
+        plt.ylabel("AVG Loss")
+        plt.title("Training Loss Over Epochs")
+        plt.legend()
+        plt.grid()
+        plt.show()
 
 
 if __name__ == "__main__":
-    Game()
+    main = Main()
+    main.main()
