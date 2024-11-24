@@ -179,13 +179,13 @@ class Main:
         accuracy = 100 * correct / total
         print(f"Test Accuracy: {accuracy:.2f}%")
 
-        # 保存結果到 CSV
+        """# 保存結果到 CSV
         with open(output_csv, mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(["TrueClass", "PredictedClass"])  # CSV 標題
             writer.writerows(results)  # 寫入每行數據
 
-        print(f"Predictions saved to {output_csv}")
+        print(f"Predictions saved to {output_csv}")"""
 
     def plot_avg_losses(self, avg_losses):
         """
