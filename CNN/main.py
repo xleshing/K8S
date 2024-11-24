@@ -4,15 +4,14 @@ from torchvision import transforms
 from model import CNN, QTrainer
 from settings import *
 from dataset import TestDataset, TrainingDataset
-from sorted_dataset import SortedTestDataset, SortedTrainingDataset
 from tqdm import tqdm
 import csv
 import matplotlib.pyplot as plt
 
 
 class Main:
-    def __init__(self, train_all=1):
-        self.train_all = train_all
+    def __init__(self):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # 訓練數據轉換
         self.transform = transforms.Compose([
@@ -21,15 +20,9 @@ class Main:
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
 
-        if self.train_all:
-            # 加載數據集
-            self.train_dataset = TrainingDataset(root_dir=TRAIN_DATASET_DIR, transform=self.transform)
-            self.test_dataset = TestDataset(root_dir=TEST_DATASET_DIR, csv_file=TEST_CSV_FILE, transform=self.transform)
-
-        else:
-            # 加載數據集
-            self.train_dataset = SortedTrainingDataset(csv_file=SORTED_TRAIN_CSV_PATH, transform=self.transform, range_start=TRAIN_LIMIT_START, range_end=TRAIN_LIMIT_END)
-            self.test_dataset = SortedTestDataset(csv_file=SORTED_TEST_CSV_PATH, transform=self.transform, range_start=TEST_LIMIT_START, range_end=TEST_LIMIT_END)
+        # 加載數據集
+        self.train_dataset = TrainingDataset(root_dir=TRAIN_DATASET_DIR, transform=self.transform)
+        self.test_dataset = TestDataset(root_dir=TEST_DATASET_DIR, csv_file=TEST_CSV_FILE, transform=self.transform)
 
         # 定義 DataLoader
         self.train_loader = DataLoader(dataset=self.train_dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -50,7 +43,7 @@ class Main:
         self.model = CNN(input_channels=INPUT_CHANNELS,
                          output_size=NUM_CLASSES,
                          input_height=INPUT_HEIGHT,
-                         input_width=INPUT_WIDTH).to('cuda')
+                         input_width=INPUT_WIDTH).to(self.device)
 
         # 初始化 QTrainer
         self.trainer = QTrainer(model_cnn=self.model, lr=LR, gamma=GAMMA)
@@ -90,15 +83,11 @@ class Main:
             trainer.model_cnn.train()  # 確保模型處於訓練模式
             running_loss = 0.0
 
-            if self.train_all:
-                # 使用 tqdm 包裝進度條
-                progress_bar = tqdm(train_loader, desc=f"Training Epoch {epoch + 1}", unit="batch")
-            else:
-                progress_bar = tqdm(train_loader, desc=f"Training {TRAIN_LIMIT_START} to {TRAIN_LIMIT_END} percent Epoch {epoch + 1}", unit="batch")
+            progress_bar = tqdm(train_loader, desc=f"Training Epoch {epoch + 1}", unit="batch")
 
             for images, labels in progress_bar:
                 # 將數據轉移到 GPU（如果可用）
-                images, labels = images.to('cuda'), labels.to('cuda')
+                images, labels = images.to(self.device), labels.to(self.device)
 
                 # 使用 train_step 處理單個批次
                 trainer.train_step(images, labels)
@@ -137,10 +126,8 @@ class Main:
 
         self.plot_avg_losses(self.avg_losses)
         # 保存平均 Loss 到文件
-        if self.train_all:
-            self.save_avg_losses(self.avg_losses, f"CSV/avg_losses.csv")
-        else:
-            self.save_avg_losses(self.avg_losses, f"CSV/Training_{TRAIN_LIMIT_START}_to_{TRAIN_LIMIT_END}_percent_avg_losses.csv")
+        self.save_avg_losses(self.avg_losses, f"CSV/avg_losses.csv")
+
         print("Training completed. AVG Losses saved to CSV/avg_losses.csv.")
 
     def save_avg_losses(self, avg_losses, file_path):
@@ -163,8 +150,7 @@ class Main:
         output_csv: 保存測試結果的 CSV 文件路徑
         """
         model.eval()  # 設置模型為測試模式
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model.to(device)  # 確保模型在正確的設備上
+        model.to(self.device)  # 確保模型在正確的設備上
 
         # 初始化變量
         correct = 0
@@ -175,7 +161,7 @@ class Main:
         with torch.no_grad():
             with tqdm(total=len(test_loader), desc="Testing Progress", unit="batch") as pbar:
                 for images, labels in test_loader:
-                    images, labels = images.to(device), labels.to(device)
+                    images, labels = images.to(self.device), labels.to(self.device)
                     outputs = model(images)
                     _, predicted = torch.max(outputs.data, 1)  # 獲取預測類別
 
@@ -217,5 +203,5 @@ class Main:
 
 
 if __name__ == "__main__":
-    main = Main(0)
-    main.main(0)
+    main = Main()
+    main.main(IS_TRAIN)

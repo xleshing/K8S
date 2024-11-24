@@ -71,15 +71,15 @@ class BrightnessSorter:
 
 if __name__ == "__main__":
     # 訓練集（有子目錄）
-    train_sorter = BrightnessSorter(input_dir="dataset/Final_Training/Images", output_csv="CSV/sorted_train.csv")
+    train_sorter = BrightnessSorter(input_dir="../dataset/Final_Training/Images", output_csv="CSV/sorted_train.csv")
     train_sorter.process_and_sort(has_subdirs=True)
     train_sorter.save_to_csv()
 
     # 測試集（無子目錄，但有 CSV 文件記錄類別）
     test_sorter = BrightnessSorter(
-        input_dir="dataset/Final_Test/Images",
+        input_dir="../dataset/Final_Test/Images",
         output_csv="CSV/sorted_test.csv",
-        csv_file="dataset/Final_Test/Images/GT-final_test.csv",
+        csv_file="../dataset/Final_Test/Images/GT-final_test.csv",
     )
     test_sorter.process_and_sort(has_subdirs=False)
     test_sorter.save_to_csv()
