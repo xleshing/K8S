@@ -60,43 +60,43 @@ class Main:
             start_epoch, _ = self.trainer.load_checkpoint(CHECKPOINT_PATH, mode="full")
 
             # 訓練模型
-            self.train_model_with_step(self.trainer, self.train_loader, epochs=EPOCHS, checkpoint_path=CHECKPOINT_PATH,
+            self.train_model_with_step(epochs=EPOCHS, checkpoint_path=CHECKPOINT_PATH,
                                        start_epoch=start_epoch)
 
             # 測試模型
-            self.test_model(self.model, self.test_loader)
+            self.test_model()
 
             self.trainer.save_checkpoint(file_path=MODEL_LOAD_PATH, epoch=None, loss=None, mode="model_only")
         else:
             self.trainer.load_checkpoint(MODEL_LOAD_PATH, mode="model_only")  # 僅加載模型參數
-            self.test_model(self.model, self.test_loader)  # 測試模型
+            self.test_model()  # 測試模型
 
-    def train_model_with_step(self, trainer, train_loader, epochs, checkpoint_path, start_epoch=0):
+    def train_model_with_step(self, epochs, checkpoint_path, start_epoch=0):
         """
         使用 trainer 的 train_step 方法進行模型訓練
         trainer: 包含模型、優化器與損失計算的封裝類（如 QTrainer）
         train_loader: PyTorch DataLoader，提供訓練數據
         epochs: 訓練週期數
         """
-        total_batches = len(train_loader)
+        total_batches = len(self.train_loader)
         for epoch in range(start_epoch, epochs):
-            trainer.model_cnn.train()  # 確保模型處於訓練模式
+            self.trainer.model_cnn.train()  # 確保模型處於訓練模式
             running_loss = 0.0
 
-            progress_bar = tqdm(train_loader, desc=f"Training Epoch {epoch + 1}", unit="batch")
+            progress_bar = tqdm(self.train_loader, desc=f"Training Epoch {epoch + 1}", unit="batch")
 
             for images, labels in progress_bar:
                 # 將數據轉移到 GPU（如果可用）
                 images, labels = images.to(self.device), labels.to(self.device)
 
                 # 使用 train_step 處理單個批次
-                trainer.train_step(images, labels)
+                self.trainer.train_step(images, labels)
 
                 # 累計損失
-                running_loss += trainer.losses[-1]  # 獲取當前批次的損失
+                running_loss += self.trainer.losses[-1]  # 獲取當前批次的損失
 
                 # 動態更新進度條後綴
-                progress_bar.set_postfix({"Batch Loss": trainer.losses[-1],
+                progress_bar.set_postfix({"Batch Loss": self.trainer.losses[-1],
                                           "Avg Loss": running_loss / total_batches})
 
             current_avg_loss = running_loss / total_batches
@@ -107,7 +107,7 @@ class Main:
             if current_avg_loss < self.best_avg_loss:
                 self.best_avg_loss = current_avg_loss
                 self.no_improve_epochs = 0
-                trainer.save_checkpoint(file_path=checkpoint_path, epoch=epoch + 1, loss=running_loss / total_batches, mode="full")
+                self.trainer.save_checkpoint(file_path=checkpoint_path, epoch=epoch + 1, loss=running_loss / total_batches, mode="full")
                 print(f"New best model saved to {checkpoint_path}")
             else:
                 self.no_improve_epochs += 1
@@ -120,9 +120,9 @@ class Main:
             print(f"Epoch {epoch + 1}/{epochs}, Loss: {running_loss / total_batches:.4f}")
 
         # 可視化損失與梯度變化
-        trainer.plot_losses()
-        trainer.plot_gradient_norms()
-        trainer.plot_parameter_gradient_norms()
+        self.trainer.plot_losses()
+        self.trainer.plot_gradient_norms()
+        self.trainer.plot_parameter_gradient_norms()
 
         self.plot_avg_losses(self.avg_losses)
         # 保存平均 Loss 到文件
@@ -142,27 +142,27 @@ class Main:
             for epoch, loss in enumerate(avg_losses, start=1):
                 writer.writerow([epoch, loss])  # 寫入每一行
 
-    def test_model(self, model, test_loader, output_csv=OUTPUT_CSV):
+    def test_model(self):  # , output_csv=OUTPUT_CSV):
         """
         測試模型並保存結果到 CSV，包含進度條顯示
         model: 測試的模型
         test_loader: 測試數據的 DataLoader
         output_csv: 保存測試結果的 CSV 文件路徑
         """
-        model.eval()  # 設置模型為測試模式
-        model.to(self.device)  # 確保模型在正確的設備上
+        self.model.eval()  # 設置模型為測試模式
+        self.model.to(self.device)  # 確保模型在正確的設備上
 
         # 初始化變量
         correct = 0
         total = 0
-        results = []  # 保存每個文件的測試結果
+        # results = []  # 保存每個文件的測試結果
 
         # 加入 tqdm 顯示進度
         with torch.no_grad():
-            with tqdm(total=len(test_loader), desc="Testing Progress", unit="batch") as pbar:
-                for images, labels in test_loader:
+            with tqdm(total=len(self.test_loader), desc="Testing Progress", unit="batch") as pbar:
+                for images, labels in self.test_loader:
                     images, labels = images.to(self.device), labels.to(self.device)
-                    outputs = model(images)
+                    outputs = self.model(images)
                     _, predicted = torch.max(outputs.data, 1)  # 獲取預測類別
 
                     # 記錄準確率計算
@@ -170,7 +170,7 @@ class Main:
                     correct += (predicted == labels).sum().item()
 
                     # 保存真實類別和預測類別
-                    results.extend(zip(labels.cpu().numpy(), predicted.cpu().numpy()))
+                    # results.extend(zip(labels.cpu().numpy(), predicted.cpu().numpy()))
 
                     # 更新進度條
                     pbar.update(1)

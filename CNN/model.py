@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import os
 import matplotlib
-from radam import RAdam
 import torch.nn.init as init
+from torch_optimizer import RAdam
 
 matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
