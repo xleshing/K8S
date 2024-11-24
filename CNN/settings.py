@@ -20,8 +20,8 @@ TEST_LIMIT_END = 100
 IS_TRAIN = True  # 預設為訓練模型
 
 # 數據集路徑
-TRAIN_DATASET_DIR = "dataset/Train/250"  # 訓練資料路徑
-TEST_DATASET_DIR = "dataset/Test/250/Images"  # 測試資料路徑
+TRAIN_DATASET_DIR = "dataset/Train/50"  # 訓練資料路徑
+TEST_DATASET_DIR = "dataset/Test/50/Images"  # 測試資料路徑
 TEST_CSV_FILE = "dataset/Final_Test/Images/GT-final_test.csv"  # 測試資料標籤表路徑
 OUTPUT_CSV = "CSV/predictions.csv"  # 預測結果路徑
 CHECKPOINT_PATH = "model/checkpoint.pth"  # 檢查點路徑
