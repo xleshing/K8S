@@ -27,18 +27,15 @@ class TrainingDataset(Dataset):
             # 保存每張圖像的信息
             for _, row in annotations.iterrows():
                 file_path = os.path.join(folder_path, row["Filename"])
-                roi = (row["Roi.X1"], row["Roi.Y1"], row["Roi.X2"], row["Roi.Y2"])
                 class_id = row["ClassId"]
-                self.data.append((file_path, roi, class_id))
+                self.data.append((file_path, class_id))
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        file_path, roi, class_id = self.data[idx]
+        file_path, class_id = self.data[idx]
         image = Image.open(file_path).convert("RGB")  # 加載圖像
-        x1, y1, x2, y2 = roi
-        image = image.crop((x1, y1, x2, y2))  # 裁剪 ROI
 
         if self.transform:
             image = self.transform(image)
@@ -65,13 +62,10 @@ class TestDataset(Dataset):
     def __getitem__(self, idx):
         row = self.annotations.iloc[idx]
         file_path = os.path.join(self.root_dir, row["Filename"])
-        roi = (row["Roi.X1"], row["Roi.Y1"], row["Roi.X2"], row["Roi.Y2"])
         class_id = row["ClassId"]  # 類別標籤
 
-        # 加載圖像並裁剪 ROI
+        # 加載圖像
         image = Image.open(file_path).convert("RGB")
-        x1, y1, x2, y2 = roi
-        image = image.crop((x1, y1, x2, y2))  # 裁剪 ROI 區域
 
         if self.transform:
             image = self.transform(image)

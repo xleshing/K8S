@@ -100,19 +100,6 @@ class CNN(nn.Module):
 
         return x
 
-    def save(self, file_name='model_cnn.pth'):
-        """
-        (CNN_QNet, str) -> None
-        file_name: 保存状态文件的路径
-        将模型状态保存到file_name
-        """
-        model_folder_path = './model'
-        if not os.path.exists(model_folder_path):
-            os.makedirs(model_folder_path)
-
-        file_name = os.path.join(model_folder_path, file_name)
-        torch.save(self.state_dict(), file_name)
-
 
 class QTrainer:
     def __init__(self, model_cnn, lr, gamma):
@@ -160,21 +147,41 @@ class QTrainer:
         # 保存損失
         self.losses.append(loss.item())
 
-    def save_checkpoint(self, epoch, loss, file_path):
+    def save_checkpoint(self, epoch, loss, file_path, mode="full"):
         """
-        保存檢查點
+        保存檢查點或模型
+        :param epoch: 當前訓練的 epoch
+        :param loss: 當前訓練的損失值
+        :param file_path: 保存文件的路徑
+        :param mode: 保存模式
+                     "full" - 保存完整的檢查點（包括模型參數、優化器狀態、epoch 和 loss）
+                     "model_only" - 僅保存模型參數
         """
-        checkpoint = {
-            "model_state_dict": self.model_cnn.state_dict(),
-            "optimizer_state_dict": self.optimizer.state_dict(),
-            "epoch": epoch,
-            "loss": loss
-        }
-        torch.save(checkpoint, file_path)
+        if mode == "full":
+            checkpoint = {
+                "model_state_dict": self.model_cnn.state_dict(),
+                "optimizer_state_dict": self.optimizer.state_dict(),
+                "epoch": epoch,
+                "loss": loss
+            }
+            torch.save(checkpoint, file_path)
+            print(f"Full checkpoint saved to {file_path}")
+        elif mode == "model_only":
+            checkpoint = {
+                "model_state_dict": self.model_cnn.state_dict(),
+            }
+            torch.save(checkpoint, file_path)
+            print(f"Model parameters saved to {file_path}")
+        else:
+            raise ValueError(f"Invalid mode: {mode}. Use 'full' or 'model_only'.")
 
-    def load_checkpoint(self, file_path):
+    def load_checkpoint(self, file_path, mode="full"):
         """
-        加載檢查點
+        加載檢查點或模型
+        :param file_path: 模型檔案路徑
+        :param mode: 加載模式
+                     "full" - 加載完整的檢查點（包含模型、優化器狀態等）
+                     "model_only" - 只加載模型參數，用於推理或測試
         """
         if not torch.cuda.is_available():
             map_location = torch.device("cpu")
@@ -186,12 +193,22 @@ class QTrainer:
             return 0, 0.0
 
         checkpoint = torch.load(file_path, map_location=map_location)
+
+        # 加載模型參數
         self.model_cnn.load_state_dict(checkpoint["model_state_dict"])
-        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        epoch = checkpoint["epoch"]
-        loss = checkpoint["loss"]
-        print(f"Checkpoint loaded: epoch {epoch}, loss {loss:.4f}")
-        return epoch, loss
+
+        if mode == "full":
+            # 加載優化器狀態和其他訓練相關信息
+            self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            epoch = checkpoint["epoch"]
+            loss = checkpoint["loss"]
+            print(f"Checkpoint loaded: epoch {epoch}, loss {loss:.4f}")
+            return epoch, loss
+        elif mode == "model_only":
+            print(f"Model parameters loaded from {file_path}")
+            return None, None
+        else:
+            raise ValueError(f"Invalid mode: {mode}. Use 'full' or 'model_only'.")
 
     def plot_losses(self):
         plt.figure(figsize=(10, 5))

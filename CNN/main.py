@@ -4,13 +4,16 @@ from torchvision import transforms
 from model import CNN, QTrainer
 from settings import *
 from dataset import TestDataset, TrainingDataset
+from sorted_dataset import SortedTestDataset, SortedTrainingDataset
 from tqdm import tqdm
 import csv
 import matplotlib.pyplot as plt
 
 
 class Main:
-    def __init__(self):
+    def __init__(self, train_all=1):
+        self.train_all = train_all
+
         # 訓練數據轉換
         self.transform = transforms.Compose([
             transforms.Resize((32, 32)),
@@ -18,9 +21,15 @@ class Main:
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
 
-        # 加載數據集
-        self.train_dataset = TrainingDataset(root_dir=TRAIN_DATASET_DIR, transform=self.transform)
-        self.test_dataset = TestDataset(root_dir=TEST_DATASET_DIR, csv_file=TEST_CSV_FILE, transform=self.transform)
+        if self.train_all:
+            # 加載數據集
+            self.train_dataset = TrainingDataset(root_dir=TRAIN_DATASET_DIR, transform=self.transform)
+            self.test_dataset = TestDataset(root_dir=TEST_DATASET_DIR, csv_file=TEST_CSV_FILE, transform=self.transform)
+
+        else:
+            # 加載數據集
+            self.train_dataset = SortedTrainingDataset(csv_file=SORTED_TRAIN_CSV_PATH, transform=self.transform, range_start=TRAIN_LIMIT_START, range_end=TRAIN_LIMIT_END)
+            self.test_dataset = SortedTestDataset(csv_file=SORTED_TEST_CSV_PATH, transform=self.transform, range_start=TEST_LIMIT_START, range_end=TEST_LIMIT_END)
 
         # 定義 DataLoader
         self.train_loader = DataLoader(dataset=self.train_dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -51,20 +60,23 @@ class Main:
         self.best_avg_loss = float('inf')  # 初始化最佳驗證損失
         self.avg_losses = []  # 保存每個 epoch 的平均 Loss
 
-    def main(self):
+    def main(self, is_train=1):
 
-        # 加載檢查點（如果有）
-        start_epoch, _ = self.trainer.load_checkpoint(CHECKPOINT_PATH)
+        if is_train:
+            # 加載檢查點（如果有）
+            start_epoch, _ = self.trainer.load_checkpoint(CHECKPOINT_PATH, mode="full")
 
-        # 訓練模型
-        self.train_model_with_step(self.trainer, self.train_loader, epochs=EPOCHS, checkpoint_path=CHECKPOINT_PATH,
-                                   start_epoch=start_epoch)
+            # 訓練模型
+            self.train_model_with_step(self.trainer, self.train_loader, epochs=EPOCHS, checkpoint_path=CHECKPOINT_PATH,
+                                       start_epoch=start_epoch)
 
-        # 測試模型
-        self.test_model(self.model, self.test_loader)
+            # 測試模型
+            self.test_model(self.model, self.test_loader)
 
-        # 保存模型
-        self.model.save("traffic_sign_cnn.pth")
+            self.trainer.save_checkpoint(file_path=MODEL_LOAD_PATH, epoch=None, loss=None, mode="model_only")
+        else:
+            self.trainer.load_checkpoint(MODEL_LOAD_PATH, mode="model_only")  # 僅加載模型參數
+            self.test_model(self.model, self.test_loader)  # 測試模型
 
     def train_model_with_step(self, trainer, train_loader, epochs, checkpoint_path, start_epoch=0):
         """
@@ -78,8 +90,12 @@ class Main:
             trainer.model_cnn.train()  # 確保模型處於訓練模式
             running_loss = 0.0
 
-            # 使用 tqdm 包裝進度條
-            progress_bar = tqdm(train_loader, desc=f"Training Epoch {epoch + 1}", unit="batch")
+            if self.train_all:
+                # 使用 tqdm 包裝進度條
+                progress_bar = tqdm(train_loader, desc=f"Training Epoch {epoch + 1}", unit="batch")
+            else:
+                progress_bar = tqdm(train_loader, desc=f"Training {TRAIN_LIMIT_START} to {TRAIN_LIMIT_END} percent Epoch {epoch + 1}", unit="batch")
+
             for images, labels in progress_bar:
                 # 將數據轉移到 GPU（如果可用）
                 images, labels = images.to('cuda'), labels.to('cuda')
@@ -102,7 +118,7 @@ class Main:
             if current_avg_loss < self.best_avg_loss:
                 self.best_avg_loss = current_avg_loss
                 self.no_improve_epochs = 0
-                trainer.save_checkpoint(epoch + 1, running_loss / total_batches, checkpoint_path)
+                trainer.save_checkpoint(file_path=checkpoint_path, epoch=epoch + 1, loss=running_loss / total_batches, mode="full")
                 print(f"New best model saved to {checkpoint_path}")
             else:
                 self.no_improve_epochs += 1
@@ -121,8 +137,11 @@ class Main:
 
         self.plot_avg_losses(self.avg_losses)
         # 保存平均 Loss 到文件
-        self.save_avg_losses(self.avg_losses, "avg_losses.csv")
-        print("Training completed. AVG Losses saved to avg_losses.csv.")
+        if self.train_all:
+            self.save_avg_losses(self.avg_losses, f"CSV/avg_losses.csv")
+        else:
+            self.save_avg_losses(self.avg_losses, f"CSV/Training_{TRAIN_LIMIT_START}_to_{TRAIN_LIMIT_END}_percent_avg_losses.csv")
+        print("Training completed. AVG Losses saved to CSV/avg_losses.csv.")
 
     def save_avg_losses(self, avg_losses, file_path):
         """
@@ -198,5 +217,5 @@ class Main:
 
 
 if __name__ == "__main__":
-    main = Main()
-    main.main()
+    main = Main(0)
+    main.main(0)
