@@ -25,3 +25,7 @@ sudo containerd config default > /etc/containerd/config.toml
 /etc/containerd/config.toml -> SystemCgroup = true
 
 calico
+
+second scheduler:
+
+apiVersion: kubescheduler.config.k8s.io/v1beta2 -> apiVersion: kubescheduler.config.k8s.io/v1
