@@ -52,6 +52,7 @@ def train_model(epochs=10):
 
             # 反向传播和优化
             loss.backward()
+
             optimizer.step()
 
             running_loss += loss.item()

@@ -30,6 +30,9 @@ class LayerController(nn.Module):
 
     def forward(self, x):
         """前向传播：依次通过所有层"""
-        for layer in self.layers:
+        for i, layer in enumerate(self.layers):
+            if isinstance(layer, FcLayer) and len(x.shape) > 2:
+                # 将张量扁平化为 (batch_size, -1) 形状，适配全连接层
+                x = x.view(x.size(0), -1)
             x = layer(x)
         return x
