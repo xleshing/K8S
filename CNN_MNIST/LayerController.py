@@ -1,6 +1,7 @@
+import torch.nn as nn
 from ConvLayer import ConvLayer
 from FcLayer import FcLayer
-import torch.nn as nn
+import torch
 
 class LayerController(nn.Module):
     def __init__(self):
@@ -36,3 +37,14 @@ class LayerController(nn.Module):
                 x = x.view(x.size(0), -1)
             x = layer(x)
         return x
+
+    def save_model(self, path):
+        """保存模型"""
+        torch.save(self.state_dict(), path)
+        print(f"模型已保存至 {path}")
+
+    def load_model(self, path, device):
+        """加载模型"""
+        self.load_state_dict(torch.load(path, map_location=device))
+        self.to(device)
+        print(f"模型已从 {path} 加载")

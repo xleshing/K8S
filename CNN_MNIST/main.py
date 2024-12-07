@@ -33,6 +33,10 @@ model = model.to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
+# 保存和加载路径
+model_path = "layer_controller_model.pth"
+
+
 # 训练函数
 def train_model(epochs=10):
     model.train()
@@ -52,21 +56,26 @@ def train_model(epochs=10):
 
             # 反向传播和优化
             loss.backward()
-
             optimizer.step()
 
             running_loss += loss.item()
 
             if (batch_idx + 1) % 100 == 0:
-                print(f"Epoch [{epoch + 1}/{epochs}], Step [{batch_idx + 1}/{len(train_loader)}], Loss: {loss.item():.4f}")
+                print(
+                    f"Epoch [{epoch + 1}/{epochs}], Step [{batch_idx + 1}/{len(train_loader)}], Loss: {loss.item():.4f}")
 
         epoch_loss = running_loss / len(train_loader)
         print(f"Epoch {epoch + 1}/{epochs}, 平均损失: {epoch_loss:.4f}")
 
     print("训练完成")
+    # 保存模型
+    model.save_model(model_path)
+
 
 # 测试函数
 def test_model():
+    # 加载模型
+    model.load_model(model_path, device)
     model.eval()
     correct = 0
     total = 0
@@ -84,11 +93,12 @@ def test_model():
 
     print(f"测试准确率: {100 * correct / total:.2f}%")
 
+
 # 执行训练和测试
 train_model(epochs=10)
 test_model()
 
 # 动态管理层
 print("当前模型层列表:", model.list_layers())
-model.remove_layer(2)
-print("移除第3层后的层列表:", model.list_layers())
+# model.remove_layer(2)
+# print("移除第3层后的层列表:", model.list_layers())
