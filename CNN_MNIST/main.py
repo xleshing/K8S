@@ -25,7 +25,9 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=F
 model = LayerController()
 model.add_conv_layer(in_channels=1, out_channels=32)
 model.add_conv_layer(in_channels=32, out_channels=64)
-model.add_fc_layer(in_features=64 * 7 * 7, out_features=128)
+model.add_conv_layer(in_channels=64, out_channels=128)
+model.add_fc_layer(in_features=128 * 3 * 3, out_features=256)
+model.add_fc_layer(in_features=256, out_features=128)
 model.add_fc_layer(in_features=128, out_features=10, activation=False)
 model = model.to(device)
 
@@ -38,7 +40,7 @@ model_path = "layer_controller_model.pth"
 
 
 # 训练函数
-def train_model(epochs=10):
+def train_model(epochs=5):
     model.train()
     for epoch in range(epochs):
         running_loss = 0.0
@@ -95,7 +97,7 @@ def test_model():
 
 
 # 执行训练和测试
-train_model(epochs=10)
+train_model(epochs=5)
 test_model()
 
 # 动态管理层
