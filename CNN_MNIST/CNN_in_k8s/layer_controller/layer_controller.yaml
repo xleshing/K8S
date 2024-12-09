@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layer-controller
+  labels:
+    app: layer-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: layer-controller
+  template:
+    metadata:
+      labels:
+        app: layer-controller
+    spec:
+      serviceAccountName: layer-controller-sa
+      containers:
+      - name: layer-controller
+        image: <your-docker-registry>/layer-controller-image:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: layer-controller-service
+  labels:
+    app: layer-controller
+spec:
+  selector:
+    app: layer-controller
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
