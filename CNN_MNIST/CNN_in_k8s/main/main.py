@@ -1,6 +1,6 @@
 import requests
 
-LAYER_CONTROLLER_URL = "http://layer-controller-service:5000"
+LAYER_CONTROLLER_URL = "http://localhost:32323"
 
 def main():
     # 指定層數與配置
