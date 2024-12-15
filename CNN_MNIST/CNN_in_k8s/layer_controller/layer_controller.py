@@ -66,6 +66,7 @@ def create_layers():
             app.logger.info(f"Failed to create layer {idx} after {max_retries} attempts")
 
     app.logger.info(f"Layers created, created_pods: {created_pods}")
+    return jsonify({"message": "Layers created successfully", "created_pods": created_pods}), 200
 
 
 @app.route('/forward', methods=['POST'])
@@ -76,7 +77,7 @@ def forward():
     global layers
 
     app.logger.info(f"Starting forward")
-    input_data = request.json()["input"]
+    input_data = request.json["input"]
 
     for idx, layer in enumerate(layers):
         service_name = f"layer-service-{idx}"
@@ -101,8 +102,8 @@ def backward():
     global layers
 
     app.logger.info(f"Starting backward")
-    learning_rate = request.json()["learning_rate"]
-    loss = request.json()["loss"]
+    learning_rate = request.json["learning_rate"]
+    loss = request.json["loss"]
 
     for idx, layer in enumerate(layers):
         service_name = f"layer-service-{idx}"
@@ -125,6 +126,13 @@ def initialize():
     app.logger.info(f"Starting initialize")
     for idx, layer in enumerate(layers):
         service_name = f"layer-service-{idx}"
+
+        try:
+            wait_for_pod_ready(f"layer-{idx}")
+        except TimeoutError as e:
+            app.logger.error(f"Service {service_name} failed to become ready: {e}")
+            return jsonify({"error": f"Service {service_name} not ready"}), 500
+
         url = f"http://{service_name}:5000/initialize"
         try:
             response = requests.post(url)
@@ -146,7 +154,7 @@ def save_model():
         service_name = f"layer-service-{idx}"
         url = f"http://{service_name}:5000/save"
         try:
-            response = requests.post(url, json={"path": os.path.join(request.json()["model_path"], f"layer-{idx}.pth")})
+            response = requests.post(url, json={"path": os.path.join(request.json["model_path"], f"layer-{idx}.pth")})
             if response:
                 app.logger.error(f"Failed save layer {idx}: {response.json()['message']}")
             else:
