@@ -166,7 +166,7 @@ def create_pod(pod_name, layer_type, config):
     try:
         container = client.V1Container(
             name=pod_name,
-            image="ycair/cnn-layer-service",  # 替換為您的 Docker 映像名稱
+            image="ycair/cnn_layer_service",  # 替換為您的 Docker 映像名稱
             env=[
                 client.V1EnvVar(name="LAYER_TYPE", value=layer_type),
                 client.V1EnvVar(name="LAYER_CONFIG", value=json.dumps(config)),

@@ -17,7 +17,7 @@ spec:
       serviceAccountName: layer-controller-sa
       containers:
       - name: layer-controller
-        image: <your-docker-registry>/layer-controller-image:latest
+        image: ycair/cnn_layer_controller:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
@@ -52,5 +52,5 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 1Gi
 
