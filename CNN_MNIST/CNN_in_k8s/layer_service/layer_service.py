@@ -55,9 +55,9 @@ def forward():
 
         output = model(input_data)
 
-        return jsonify({"output": output})
+        return jsonify({"output": output}), 200
     except Exception as e:
-        return jsonify({"output": None, "message": e})
+        return jsonify({"output": None, "message": e}), 500
 
 
 @app.route('/backward', methods=['POST'])
@@ -73,9 +73,9 @@ def backward():
         loss.backward()
 
         optimizer.step()
-        return
+        return None, 200
     except Exception as e:
-        return jsonify({"message": e})
+        return jsonify({"message": e}), 500
 
 
 @app.route('/save', methods=['POST'])
@@ -84,9 +84,9 @@ def save():
     try:
         path = request.json["path"]
         torch.save(model.state_dict(), path)
-        return
+        return None, 200
     except Exception as e:
-        return jsonify({"message": e})
+        return jsonify({"message": e}), 500
 
 
 @app.route('/load', methods=['POST'])
@@ -96,9 +96,9 @@ def load():
         path = request.json()("path")
         model.load_state_dict(torch.load(path))
         model.eval()
-        return
+        return None, 200
     except Exception as e:
-        return jsonify({"message": e})
+        return jsonify({"message": e}), 500
 
 
 @app.route('/health', methods=['GET'])
