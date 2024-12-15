@@ -42,9 +42,9 @@ def initialize():
             model = ConvLayer(**LAYER_CONFIG)
         elif LAYER_TYPE == "FcLayer":
             model = FcLayer(**LAYER_CONFIG)
-        return
+        return None, 200
     except Exception as e:
-        return jsonify({"message": e})
+        return jsonify({"message": e}), 500
 
 
 @app.route('/forward', methods=['POST'])
@@ -99,6 +99,11 @@ def load():
         return
     except Exception as e:
         return jsonify({"message": e})
+
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
 
 
 if __name__ == '__main__':

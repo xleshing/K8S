@@ -45,7 +45,7 @@ def train_model(epochs=5):
         running_loss = 0.0
         for batch_idx, (inputs, labels) in enumerate(train_loader):
             # 前向传播
-            response = requests.post(LAYER_CONTROLLER_URL + "/forward", json={"input_path": layers})
+            response = requests.post(LAYER_CONTROLLER_URL + "/forward", json={"input": inputs})
 
             # 计算损失
             loss = criterion(response.json()("output"), labels)

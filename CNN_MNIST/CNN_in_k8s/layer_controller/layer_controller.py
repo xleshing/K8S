@@ -119,6 +119,7 @@ def backward():
             raise e
 
     app.logger.info("Backward complete")
+    return jsonify({"message": "Backward complete"}), 200
 
 
 @app.route('/initialize', methods=['POST'])
@@ -145,6 +146,7 @@ def initialize():
             raise e
 
     app.logger.info("initialize complete")
+    return jsonify({"message": "Initialization complete"}), 200
 
 
 @app.route('/save_model', methods=['POST'])
@@ -164,6 +166,7 @@ def save_model():
             raise e
 
     app.logger.info("Save_model complete")
+    return jsonify({"message": "Save_model complete"}), 200
 
 
 def create_pod(pod_name, layer_type, config):
