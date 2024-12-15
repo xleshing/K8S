@@ -76,18 +76,18 @@ def forward():
     global layers
 
     app.logger.info(f"Starting forward")
-    input_data = request.json()("input")
+    input_data = request.json()["input"]
 
     for idx, layer in enumerate(layers):
         service_name = f"layer-service-{idx}"
         url = f"http://{service_name}:5000/forward"
         try:
             response = requests.post(url, json={"input": input_data})
-            if response.json()("output"):
+            if response.json()["output"]:
                 input_data = response.json()["output"]
                 app.logger.info(f"Successful forward on layer {idx}")
             else:
-                app.logger.error(f"Failed forward on layer {idx}: {response.json()("message")}")
+                app.logger.error(f"Failed forward on layer {idx}: {response.json()['message']}")
         except Exception as e:
             app.logger.error(f"Failed to requests layer {idx}: {e}")
             raise e
@@ -101,8 +101,8 @@ def backward():
     global layers
 
     app.logger.info(f"Starting backward")
-    learning_rate = request.json()("learning_rate")
-    loss = request.json()("loss")
+    learning_rate = request.json()["learning_rate"]
+    loss = request.json()["loss"]
 
     for idx, layer in enumerate(layers):
         service_name = f"layer-service-{idx}"
@@ -110,7 +110,7 @@ def backward():
         try:
             response = requests.post(url, json={"learning_rate": learning_rate, "loss": loss})
             if response:
-                app.logger.error(f"Failed backward on layer {idx}: {response.json()("message")}")
+                app.logger.error(f"Failed backward on layer {idx}: {response.json()['message']}")
             else:
                 app.logger.info(f"Successful backward on layer {idx}")
         except Exception as e:
@@ -129,7 +129,7 @@ def initialize():
         try:
             response = requests.post(url)
             if response:
-                app.logger.error(f"Failed initialize layer {idx}: {response.json()("message")}")
+                app.logger.error(f"Failed initialize layer {idx}: {response.json()['message']}")
             else:
                 app.logger.info(f"Successful initialize layer {idx}")
         except Exception as e:
@@ -146,9 +146,9 @@ def save_model():
         service_name = f"layer-service-{idx}"
         url = f"http://{service_name}:5000/save"
         try:
-            response = requests.post(url, json={"path": os.path.join(request.json()("model_path"), f"layer-{idx}.pth")})
+            response = requests.post(url, json={"path": os.path.join(request.json()["model_path"], f"layer-{idx}.pth")})
             if response:
-                app.logger.error(f"Failed save layer {idx}: {response.json()("message")}")
+                app.logger.error(f"Failed save layer {idx}: {response.json()['message']}")
             else:
                 app.logger.info(f"Successful save layer {idx}")
         except Exception as e:
@@ -160,10 +160,19 @@ def save_model():
 
 def create_pod(pod_name, layer_type, config):
     """
-    創建 Kubernetes Pod。
+    創建 Kubernetes Pod。如果同名 Pod 已存在，則刪除並重新創建。
     """
-    app.logger.info(f"Starting create_pod")
+    app.logger.info(f"Starting create_pod for {pod_name}")
     try:
+        # 檢查是否已存在同名的 Pod
+        existing_pod = k8s_api.list_namespaced_pod(namespace="default", field_selector=f"metadata.name={pod_name}")
+        if existing_pod.items:
+            app.logger.info(f"Pod {pod_name} already exists. Deleting it...")
+            k8s_api.delete_namespaced_pod(name=pod_name, namespace="default")
+            # 等待 Pod 被刪除
+            wait_for_deletion(pod_name, "pod")
+
+        # 創建新的 Pod
         container = client.V1Container(
             name=pod_name,
             image="ycair/cnn_layer_service",  # 替換為您的 Docker 映像名稱
@@ -186,14 +195,23 @@ def create_pod(pod_name, layer_type, config):
 
 def create_service(service_name, pod_name):
     """
-    創建 Kubernetes Service。
+    創建 Kubernetes Service。如果同名 Service 已存在，則刪除並重新創建。
     """
-    app.logger.info(f"Starting create_service")
+    app.logger.info(f"Starting create_service for {service_name}")
     try:
+        # 檢查是否已存在同名的 Service
+        existing_service = k8s_api.list_namespaced_service(namespace="default", field_selector=f"metadata.name={service_name}")
+        if existing_service.items:
+            app.logger.info(f"Service {service_name} already exists. Deleting it...")
+            k8s_api.delete_namespaced_service(name=service_name, namespace="default")
+            # 等待 Service 被刪除
+            wait_for_deletion(service_name, "service")
+
+        # 創建新的 Service
         service = client.V1Service(
             metadata=client.V1ObjectMeta(name=service_name),
             spec=client.V1ServiceSpec(
-                selector={"app": pod_name},
+                selector={"app": pod_name},  # 確保與 Pod 的 labels 匹配
                 ports=[client.V1ServicePort(port=5000, target_port=5000)],
             ),
         )
@@ -202,6 +220,33 @@ def create_service(service_name, pod_name):
     except Exception as e:
         app.logger.error(f"Error creating service {service_name}: {e}")
         raise e
+
+
+def wait_for_deletion(resource_name, resource_type, namespace="default", timeout=60):
+    """
+    等待資源（Pod 或 Service）被刪除。
+    """
+    app.logger.info(f"Waiting for {resource_type} {resource_name} to be deleted...")
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        try:
+            if resource_type == "pod":
+                k8s_api.read_namespaced_pod(name=resource_name, namespace=namespace)
+            elif resource_type == "service":
+                k8s_api.read_namespaced_service(name=resource_name, namespace=namespace)
+            else:
+                raise ValueError(f"Unsupported resource type: {resource_type}")
+            # 如果沒有拋出異常，說明資源仍存在
+            time.sleep(1)
+        except client.exceptions.ApiException as e:
+            if e.status == 404:  # 資源已刪除
+                app.logger.info(f"{resource_type.capitalize()} {resource_name} deleted successfully.")
+                return
+            else:
+                raise e
+
+    raise TimeoutError(f"Timeout waiting for {resource_type} {resource_name} to be deleted.")
 
 
 def wait_for_pod_ready(pod_name, timeout=120):
