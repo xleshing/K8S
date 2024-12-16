@@ -64,11 +64,11 @@ def forward():
 def backward():
     global model, optimizer
     try:
-        optimizer = optim.Adam(model.parameters(), lr=request.json()["learning_rate"])
+        optimizer = optim.Adam(model.parameters(), lr=request.json["learning_rate"])
 
         optimizer.zero_grad()
 
-        loss = torch.tensor(request.json()["loss"], dtype=torch.float32)
+        loss = torch.tensor(request.json["loss"], dtype=torch.float32)
 
         loss.backward()
 
@@ -93,7 +93,7 @@ def save():
 def load():
     global model
     try:
-        path = request.json()("path")
+        path = request.json["path"]
         model.load_state_dict(torch.load(path))
         model.eval()
         return jsonify({"message": "Layer load successfully"}), 200
