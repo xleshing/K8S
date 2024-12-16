@@ -5,6 +5,7 @@ import time
 import logging
 import os
 import requests
+import torch
 
 app = Flask(__name__)
 
@@ -102,25 +103,28 @@ def backward():
     global layers
 
     app.logger.info(f"Starting backward")
-    learning_rate = request.json["learning_rate"]
-    loss = request.json["loss"]
 
-    for idx, layer in enumerate(layers):
+    learning_rate = request.json["learning_rate"]
+    loss_grad = request.json["output_grad"]  # 初始梯度（最后一层的输出梯度）
+
+    # 从最后一层逐层反向传递
+    for idx in range(len(layers) - 1, -1, -1):  # 从最后一层向前
         service_name = f"layer-service-{idx}"
         url = f"http://{service_name}:5000/backward"
         try:
-            response = requests.post(url, json={"learning_rate": learning_rate, "loss": loss})
-            if response.status_code == 500:
-                app.logger.error(f"Failed backward on layer {idx}: {response.json()['message']}")
-            else:
+            response = requests.post(url, json={"learning_rate": learning_rate, "output_grad": loss_grad})
+            if response.status_code == 200:
+                # 成功获取当前层的输入梯度
+                loss_grad = response.json()["input_grad"]
                 app.logger.info(f"Successful backward on layer {idx}")
+            else:
+                app.logger.error(f"Failed backward on layer {idx}: {response.json()['message']}")
         except Exception as e:
             app.logger.error(f"Failed to requests layer {idx}: {e}")
             raise e
 
     app.logger.info("Backward complete")
     return jsonify({"message": "Backward complete"}), 200
-
 
 @app.route('/initialize', methods=['POST'])
 def initialize():

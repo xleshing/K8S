@@ -5,7 +5,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # 安装必要依赖
-RUN pip install flask kubernetes requests
+RUN pip install --no-cache-dir numpy==1.24.4 flask kubernetes requests torch==2.0.1+cpu torchvision==0.15.2+cpu -f https://download.pytorch.org/whl/torch_stable.html
 
 # 指定容器启动命令
 CMD ["python", "layer_controller.py"]

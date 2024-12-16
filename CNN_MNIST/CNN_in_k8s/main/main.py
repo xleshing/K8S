@@ -62,9 +62,11 @@ def train_model(epochs=5):
 
             # 计算损失
             loss = criterion(torch.tensor(response.json()["output"], dtype=torch.float32), labels)
+            # 计算损失的梯度
+            loss.backward()  # 对最后一层进行反向传播
+            loss_grad = torch.tensor(response.json()["output"], dtype=torch.float32).grad.clone()  # 获取最后一层的梯度
 
-            # 反向传播和优化
-            requests.post(LAYER_CONTROLLER_URL + "/backward", json={"learning_rate": learning_rate, "loss": loss.item()})
+            requests.post(LAYER_CONTROLLER_URL + "/backward", json={"learning_rate": learning_rate, "output_grad": loss_grad.tolist()})
 
             running_loss += loss.item()
 

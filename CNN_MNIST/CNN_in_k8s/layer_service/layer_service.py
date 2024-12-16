@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 LAYER_TYPE = os.getenv("LAYER_TYPE", "ConvLayer")
 LAYER_CONFIG = json.loads(os.getenv("LAYER_CONFIG", "{}"))
-global model, optimizer
+global model, optimizer, output_data, input_data
 
 
 class ConvLayer(nn.Module):
@@ -49,31 +49,38 @@ def initialize():
 
 @app.route('/forward', methods=['POST'])
 def forward():
-    global model
+    global model, output_data, input_data
     try:
-        input_data = torch.tensor(request.json["input"], dtype=torch.float32)
+        input_data = torch.tensor(request.json["input"], dtype=torch.float32, requires_grad=True)
 
-        output = model(input_data)
+        output_data = model(input_data)
 
-        return jsonify({"output": output.tolist(), "message": "Layer initialized successfully"}), 200
+        return jsonify({"output": output_data.tolist(), "message": "Layer initialized successfully"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
 
 @app.route('/backward', methods=['POST'])
 def backward():
-    global model, optimizer
+    global model, optimizer, output_data, input_data
     try:
-        optimizer = optim.Adam(model.parameters(), lr=request.json["learning_rate"])
+        learning_rate = request.json["learning_rate"]
+        output_grad = torch.tensor(request.json["output_grad"], dtype=torch.float32)
 
+        # 设置优化器
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         optimizer.zero_grad()
 
-        loss = torch.tensor(request.json["loss"], dtype=torch.float32)
+        # 反向传播
+        output_data.backward(gradient=output_grad)
 
-        loss.backward()
+        # 获取输入梯度 (上一层需要的梯度)
+        input_grad = input_data.grad.clone()
 
+        # 优化模型参数
         optimizer.step()
-        return jsonify({"message": "Layer backward successfully"}), 200
+
+        return jsonify({"message": "Backward success", "input_grad": input_grad.tolist()}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
