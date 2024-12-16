@@ -42,7 +42,7 @@ def initialize():
             model = ConvLayer(**LAYER_CONFIG)
         elif LAYER_TYPE == "FcLayer":
             model = FcLayer(**LAYER_CONFIG)
-        return None, 200
+        return jsonify({"message": "Layer initialized successfully"}), 200
     except Exception as e:
         return jsonify({"message": e}), 500
 
@@ -55,9 +55,9 @@ def forward():
 
         output = model(input_data)
 
-        return jsonify({"output": output}), 200
+        return jsonify({"output": output, "message": "Layer initialized successfully"}), 200
     except Exception as e:
-        return jsonify({"output": None, "message": e}), 500
+        return jsonify({"message": e}), 500
 
 
 @app.route('/backward', methods=['POST'])
@@ -73,7 +73,7 @@ def backward():
         loss.backward()
 
         optimizer.step()
-        return None, 200
+        return jsonify({"message": "Layer backward successfully"}), 200
     except Exception as e:
         return jsonify({"message": e}), 500
 
@@ -84,7 +84,7 @@ def save():
     try:
         path = request.json["path"]
         torch.save(model.state_dict(), path)
-        return None, 200
+        return jsonify({"message": "Layer save successfully"}), 200
     except Exception as e:
         return jsonify({"message": e}), 500
 
@@ -96,7 +96,7 @@ def load():
         path = request.json()("path")
         model.load_state_dict(torch.load(path))
         model.eval()
-        return None, 200
+        return jsonify({"message": "Layer load successfully"}), 200
     except Exception as e:
         return jsonify({"message": e}), 500
 

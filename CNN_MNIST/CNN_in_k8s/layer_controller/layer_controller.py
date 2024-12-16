@@ -84,7 +84,7 @@ def forward():
         url = f"http://{service_name}:5000/forward"
         try:
             response = requests.post(url, json={"input": input_data})
-            if response.json()["output"]:
+            if response.status_code == 200:
                 input_data = response.json()["output"]
                 app.logger.info(f"Successful forward on layer {idx}")
             else:
@@ -94,7 +94,7 @@ def forward():
             raise e
 
     app.logger.info("Forward complete")
-    return jsonify({"output": input_data})
+    return jsonify({"output": input_data}), 200
 
 
 @app.route('/backward', methods=['POST'])
@@ -110,7 +110,7 @@ def backward():
         url = f"http://{service_name}:5000/backward"
         try:
             response = requests.post(url, json={"learning_rate": learning_rate, "loss": loss})
-            if response:
+            if response.status_code == 500:
                 app.logger.error(f"Failed backward on layer {idx}: {response.json()['message']}")
             else:
                 app.logger.info(f"Successful backward on layer {idx}")
@@ -137,7 +137,7 @@ def initialize():
         url = f"http://{service_name}:5000/initialize"
         try:
             response = requests.post(url)
-            if response:
+            if response.status_code == 500:
                 app.logger.error(f"Failed initialize layer {idx}: {response.json()['message']}")
             else:
                 app.logger.info(f"Successful initialize layer {idx}")
@@ -157,7 +157,7 @@ def save_model():
         url = f"http://{service_name}:5000/save"
         try:
             response = requests.post(url, json={"path": os.path.join(request.json["model_path"], f"layer-{idx}.pth")})
-            if response:
+            if response.status_code == 500:
                 app.logger.error(f"Failed save layer {idx}: {response.json()['message']}")
             else:
                 app.logger.info(f"Successful save layer {idx}")
