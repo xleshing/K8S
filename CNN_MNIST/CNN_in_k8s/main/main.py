@@ -33,8 +33,8 @@ input_size = (1, 28, 28)  # MNIST 圖像大小
 def train_model(epochs=5):
 
     conv_layers = [
-        {"out_channels": 32, "kernel_size": 3, "padding": 1, "pool_size": 2},  # ConvLayer 1
-        {"out_channels": 64, "kernel_size": 3, "padding": 1, "pool_size": 2},  # ConvLayer 2
+        {"out_channels": 32, "kernel_size": 3, "padding": 0, "pool_size": 2},  # ConvLayer 1
+        {"out_channels": 64, "kernel_size": 3, "padding": 0, "pool_size": 2},  # ConvLayer 2
     ]
 
     # 計算展平大小
