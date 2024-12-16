@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 LAYER_TYPE = os.getenv("LAYER_TYPE", "ConvLayer")
 LAYER_CONFIG = json.loads(os.getenv("LAYER_CONFIG", "{}"))
-global criterion, model, optimizer
+global model, optimizer
 
 
 class ConvLayer(nn.Module):
@@ -30,14 +30,14 @@ class FcLayer(nn.Module):
         self.relu = nn.ReLU() if activation else nn.Identity()
 
     def forward(self, x):
+        # 展平操作，從第二維展平到最後一維
+        x = torch.flatten(x, start_dim=1)
         return self.relu(self.fc(x))
-
 
 @app.route('/initialize', methods=['POST'])
 def initialize():
-    global criterion, model
+    global model
     try:
-        criterion = nn.CrossEntropyLoss()
         if LAYER_TYPE == "ConvLayer":
             model = ConvLayer(**LAYER_CONFIG)
         elif LAYER_TYPE == "FcLayer":
