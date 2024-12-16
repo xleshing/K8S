@@ -36,19 +36,19 @@ def train_model(epochs=5):
     ]
 
     # 創建層
-    requests.post(LAYER_CONTROLLER_URL + "/create_layers", json={"layers": layers})
+    # requests.post(LAYER_CONTROLLER_URL + "/create_layers", json={"layers": layers})
 
     # 初始化層
-    requests.post(LAYER_CONTROLLER_URL + "/initialize")
+    # requests.post(LAYER_CONTROLLER_URL + "/initialize")
 
     for epoch in range(epochs):
         running_loss = 0.0
         for batch_idx, (inputs, labels) in enumerate(train_loader):
             # 前向传播
-            response = requests.post(LAYER_CONTROLLER_URL + "/forward", json={"input": inputs})
+            response = requests.post(LAYER_CONTROLLER_URL + "/forward", json={"input": inputs.tolist()})
 
             # 计算损失
-            loss = criterion(response.json()("output"), labels)
+            loss = criterion(response.json()["output"], labels)
 
             # 反向传播和优化
             requests.post(LAYER_CONTROLLER_URL + "/backward", json={"learning_rate": learning_rate, "loss": loss})

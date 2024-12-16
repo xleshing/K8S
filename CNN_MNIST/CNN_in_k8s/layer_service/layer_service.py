@@ -44,7 +44,7 @@ def initialize():
             model = FcLayer(**LAYER_CONFIG)
         return jsonify({"message": "Layer initialized successfully"}), 200
     except Exception as e:
-        return jsonify({"message": e}), 500
+        return jsonify({"message": str(e)}), 500
 
 
 @app.route('/forward', methods=['POST'])
@@ -55,9 +55,9 @@ def forward():
 
         output = model(input_data)
 
-        return jsonify({"output": output, "message": "Layer initialized successfully"}), 200
+        return jsonify({"output": output.tolist(), "message": "Layer initialized successfully"}), 200
     except Exception as e:
-        return jsonify({"message": e}), 500
+        return jsonify({"message": str(e)}), 500
 
 
 @app.route('/backward', methods=['POST'])
@@ -75,7 +75,7 @@ def backward():
         optimizer.step()
         return jsonify({"message": "Layer backward successfully"}), 200
     except Exception as e:
-        return jsonify({"message": e}), 500
+        return jsonify({"message": str(e)}), 500
 
 
 @app.route('/save', methods=['POST'])
@@ -86,7 +86,7 @@ def save():
         torch.save(model.state_dict(), path)
         return jsonify({"message": "Layer save successfully"}), 200
     except Exception as e:
-        return jsonify({"message": e}), 500
+        return jsonify({"message": str(e)}), 500
 
 
 @app.route('/load', methods=['POST'])
@@ -98,7 +98,7 @@ def load():
         model.eval()
         return jsonify({"message": "Layer load successfully"}), 200
     except Exception as e:
-        return jsonify({"message": e}), 500
+        return jsonify({"message": str(e)}), 500
 
 
 @app.route('/health', methods=['GET'])
