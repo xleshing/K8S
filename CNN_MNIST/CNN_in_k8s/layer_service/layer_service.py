@@ -68,7 +68,7 @@ def backward():
 
         optimizer.zero_grad()
 
-        loss = request.json()["loss"]
+        loss = torch.tensor(request.json()["loss"], dtype=torch.float32)
 
         loss.backward()
 

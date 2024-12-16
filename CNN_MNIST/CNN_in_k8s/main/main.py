@@ -49,10 +49,10 @@ def train_model(epochs=5):
     ]
 
     # 創建層
-    # requests.post(LAYER_CONTROLLER_URL + "/create_layers", json={"layers": layers})
+    requests.post(LAYER_CONTROLLER_URL + "/create_layers", json={"layers": layers})
 
     # 初始化層
-    # requests.post(LAYER_CONTROLLER_URL + "/initialize")
+    requests.post(LAYER_CONTROLLER_URL + "/initialize")
 
     for epoch in range(epochs):
         running_loss = 0.0
@@ -66,7 +66,7 @@ def train_model(epochs=5):
             loss = criterion(torch.tensor(response.json()["output"], dtype=torch.float32), labels)
 
             # 反向传播和优化
-            requests.post(LAYER_CONTROLLER_URL + "/backward", json={"learning_rate": learning_rate, "loss": loss})
+            requests.post(LAYER_CONTROLLER_URL + "/backward", json={"learning_rate": learning_rate, "loss": loss.item()})
 
             running_loss += loss.item()
 
