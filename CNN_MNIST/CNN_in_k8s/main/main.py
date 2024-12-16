@@ -60,8 +60,6 @@ def train_model(epochs=5):
             # 前向传播
             response = requests.post(LAYER_CONTROLLER_URL + "/forward", json={"input": inputs.tolist()})
 
-            print(np.array(response.json()["output"]).shape, np.array(labels).shape)
-
             # 计算损失
             loss = criterion(torch.tensor(response.json()["output"], dtype=torch.float32), labels)
 
