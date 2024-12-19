@@ -12,7 +12,7 @@ transform = transforms.Compose([
     transforms.Normalize((0.5,), (0.5,))
 ])
 
-batch_size = 64
+batch_size = 1024
 
 train_dataset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -49,22 +49,34 @@ def train_model(epochs=5):
     ]
 
     # 創建層
-    requests.post(LAYER_CONTROLLER_URL + "/create_layers", json={"layers": layers})
+    # requests.post(LAYER_CONTROLLER_URL + "/create_layers", json={"layers": layers})
 
     # 初始化層
-    requests.post(LAYER_CONTROLLER_URL + "/initialize")
+    # requests.post(LAYER_CONTROLLER_URL + "/initialize")
 
     for epoch in range(epochs):
         running_loss = 0.0
         for batch_idx, (inputs, labels) in enumerate(train_loader):
+            print(f"Epoch [{epoch + 1}/{epochs}], Current batch index: {batch_idx + 1}, Total batches: {len(train_loader)}")
+
+            print(f"Batch {batch_idx}: Inputs shape {inputs.shape}, Labels shape {labels.shape}")
+
             # 前向传播
             response = requests.post(LAYER_CONTROLLER_URL + "/forward", json={"input": inputs.tolist()})
 
+            # 转换输出为计算图中的张量
+            output = torch.tensor(response.json()["output"], dtype=torch.float32, requires_grad=True)
+
             # 计算损失
-            loss = criterion(torch.tensor(response.json()["output"], dtype=torch.float32), labels)
+            loss = criterion(output, labels)
+
+            # 检查梯度是否启用
+            if not output.requires_grad:
+                raise RuntimeError("Output tensor does not have requires_grad=True")
+
             # 计算损失的梯度
             loss.backward()  # 对最后一层进行反向传播
-            loss_grad = torch.tensor(response.json()["output"], dtype=torch.float32).grad.clone()  # 获取最后一层的梯度
+            loss_grad = output.grad.clone()  # 获取最后一层的梯度
 
             requests.post(LAYER_CONTROLLER_URL + "/backward", json={"learning_rate": learning_rate, "output_grad": loss_grad.tolist()})
 

@@ -47,6 +47,13 @@ def train_model(epochs=5):
         for batch_idx, (inputs, labels) in enumerate(train_loader):
             inputs, labels = inputs.to(device), labels.to(device)
 
+            print(
+                f"Epoch [{epoch + 1}/{epochs}], Current batch index: {batch_idx + 1}, Total batches: {len(train_loader)}")
+
+            print(f"Batch {batch_idx}: Inputs shape {inputs.shape}, Labels shape {labels.shape}")
+
+            # 前
+
             # 梯度清零
             optimizer.zero_grad()
 
