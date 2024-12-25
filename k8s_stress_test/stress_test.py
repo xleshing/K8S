@@ -72,6 +72,8 @@ def parse_arguments():
                         help="Total running time of the script, default is 1800 seconds")
     parser.add_argument("--cpu-request-percent", type=float, default=80.0,
                         help="Percentage of CPU requests relative to limits, default is 80%%")
+    parser.add_argument("--memory-request-percent", type=float, default=80.0,
+                        help="Percentage of Memory requests relative to limits, default is 80%%")
     parser.add_argument("--sleep-time", type=int, default=5,
                         help="Wait time (seconds) after each job submission, default is 5 seconds")
 
@@ -84,6 +86,8 @@ def parse_arguments():
 
         if not (0 <= args.cpu_request_percent <= 100):
             raise ValueError("--cpu-request-percent must be between 0 and 100.")
+        if not (0 <= args.memory_request_percent <= 100):
+            raise ValueError("--memory-request-percent must be between 0 and 100.")
     except ValueError as e:
         parser.error(str(e))
 
@@ -99,6 +103,7 @@ def main():
     duration_range = list(map(int, args.duration_range.split(',')))
     script_duration = args.script_duration
     cpu_request_percent = args.cpu_request_percent / 100
+    memory_request_percent = args.memory_request_percent / 100
     sleep_time = args.sleep_time
 
     start_time = time.time()
@@ -110,7 +115,7 @@ def main():
             memory_limit = random.randint(*memory_limit_range)
             memory_limit_str = f"{memory_limit}M"
             cpu_request = int(cpu_limit * cpu_request_percent)
-            memory_request = f"{int(memory_limit * 0.8)}M"
+            memory_request = f"{int(memory_limit * memory_request_percent)}M"
 
             duration = random.randint(*duration_range)
 
