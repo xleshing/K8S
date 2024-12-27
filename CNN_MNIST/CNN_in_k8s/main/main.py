@@ -4,6 +4,7 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.nn as nn
 import numpy as np
+import logging
 
 LAYER_CONTROLLER_URL = "http://localhost:32323"
 # 数据加载
@@ -28,6 +29,15 @@ learning_rate = 0.001  # 假設的學習率
 model_path = "./model"
 
 input_size = (1, 28, 28)  # MNIST 圖像大小
+
+# 配置日志记录
+logging.basicConfig(
+    filename="log.txt",
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s",
+    filemode="w"
+)
+logger = logging.getLogger()
 
 
 def train_model(epochs=5):
@@ -57,9 +67,14 @@ def train_model(epochs=5):
     for epoch in range(epochs):
         running_loss = 0.0
         for batch_idx, (inputs, labels) in enumerate(train_loader):
-            print(f"Epoch [{epoch + 1}/{epochs}], Current batch index: {batch_idx + 1}, Total batches: {len(train_loader)}")
+            message = (f"Epoch [{epoch + 1}/{epochs}], Current batch index: {batch_idx + 1}, "
+                       f"Total batches: {len(train_loader)}")
+            logger.info(message)
+            print(message)
 
-            print(f"Batch {batch_idx}: Inputs shape {inputs.shape}, Labels shape {labels.shape}")
+            message = f"Batch {batch_idx}: Inputs shape {inputs.shape}, Labels shape {labels.shape}"
+            logger.info(message)
+            print(message)
 
             # 前向传播
             response = requests.post(LAYER_CONTROLLER_URL + "/forward", json={"input": inputs.tolist()})
@@ -78,17 +93,23 @@ def train_model(epochs=5):
             loss.backward()  # 对最后一层进行反向传播
             loss_grad = output.grad.clone()  # 获取最后一层的梯度
 
-            requests.post(LAYER_CONTROLLER_URL + "/backward", json={"learning_rate": learning_rate, "output_grad": loss_grad.tolist()})
+            requests.post(LAYER_CONTROLLER_URL + "/backward",
+                          json={"learning_rate": learning_rate, "output_grad": loss_grad.tolist()})
 
             running_loss += loss.item()
 
             if (batch_idx + 1) % 100 == 0:
-                print(
-                    f"Epoch [{epoch + 1}/{epochs}], Step [{batch_idx + 1}/{len(train_loader)}], Loss: {loss.item():.4f}")
+                message = (f"Epoch [{epoch + 1}/{epochs}], Step [{batch_idx + 1}/{len(train_loader)}], "
+                           f"Loss: {loss.item():.4f}")
+                logger.info(message)
+                print(message)
 
         epoch_loss = running_loss / len(train_loader)
-        print(f"Epoch {epoch + 1}/{epochs}, 平均损失: {epoch_loss:.4f}")
+        message = f"Epoch {epoch + 1}/{epochs}, 平均损失: {epoch_loss:.4f}"
+        logger.info(message)
+        print(message)
 
+    logger.info("训练完成")
     print("训练完成")
 
     # 保存模型
@@ -109,6 +130,7 @@ def compute_flatten_size(input_size, conv_layers):
 
     # 計算展平大小
     return C * H * W
+
 
 if __name__ == "__main__":
     train_model()
