@@ -89,9 +89,17 @@ def backward():
 def save():
     global model
     try:
-        path = request.json["path"]
+        # 獲取請求中的保存路徑，如果沒有提供則使用默認路徑
+        path = request.json.get("path", "./default_model.pth")
+
+        # 確保目錄存在
+        directory = os.path.dirname(path)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory)
+
+        # 保存模型參數
         torch.save(model.state_dict(), path)
-        return jsonify({"message": "Layer save successfully"}), 200
+        return jsonify({"message": f"Layer saved successfully at {path}"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
@@ -100,10 +108,18 @@ def save():
 def load():
     global model
     try:
-        path = request.json["path"]
+        # 獲取請求中的模型路徑，如果沒有提供則使用默認路徑
+        path = request.json.get("path", "./default_model.pth")
+
+        # 確認模型檔案是否存在
+        if not os.path.exists(path):
+            return jsonify({"message": f"Model file not found at {path}"}), 404
+
+        # 加載模型參數
         model.load_state_dict(torch.load(path))
-        model.eval()
-        return jsonify({"message": "Layer load successfully"}), 200
+        model.eval()  # 設置為評估模式
+
+        return jsonify({"message": f"Layer loaded successfully from {path}"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
