@@ -140,7 +140,16 @@ def test_model():
     correct = 0
     total = 0
     with torch.no_grad():
-        for inputs, labels in test_loader:
+        for batch_idx, (inputs, labels) in enumerate(test_loader):
+
+            message = (f"Current batch index: {batch_idx + 1}, "
+                       f"Total batches: {len(test_loader)}")
+            logger.info(message)
+            print(message)
+
+            message = f"Batch {batch_idx}: Inputs shape {inputs.shape}, Labels shape {labels.shape}"
+            logger.info(message)
+            print(message)
 
             # 前向传播
             response = requests.post(LAYER_CONTROLLER_URL + "/forward", json={"input": inputs.tolist()})
@@ -151,7 +160,7 @@ def test_model():
             _, predicted = torch.max(outputs, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-
+    logger.info(f"测试准确率: {100 * correct / total:.2f}%")
     print(f"测试准确率: {100 * correct / total:.2f}%")
 
 
