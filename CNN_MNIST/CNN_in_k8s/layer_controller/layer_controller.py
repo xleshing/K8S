@@ -17,6 +17,7 @@ config.load_incluster_config()
 k8s_api = client.CoreV1Api()
 
 # 層列表
+LAYERS_FILE = "./layers.json"  # 保存層結構的默認檔案路徑
 layers = []
 
 
@@ -126,6 +127,7 @@ def backward():
     app.logger.info("Backward complete")
     return jsonify({"message": "Backward complete"}), 200
 
+
 @app.route('/initialize', methods=['POST'])
 def initialize():
     app.logger.info(f"Starting initialize")
@@ -173,6 +175,65 @@ def save_model():
     return jsonify({"message": "Save_model complete"}), 200
 
 
+@app.route('/load_model', methods=['POST'])
+def load_model():
+    app.logger.info(f"Starting load_model")
+    for idx, layer in enumerate(layers):
+        service_name = f"layer-service-{idx}"
+        url = f"http://{service_name}:5000/load"
+        try:
+            response = requests.post(url, json={"path": os.path.join(request.json["model_path"], f"layer-{idx}.pth")})
+            if response.status_code == 500:
+                app.logger.error(f"Failed load layer {idx}: {response.json()['message']}")
+            else:
+                app.logger.info(f"Successful load layer {idx}")
+        except Exception as e:
+            app.logger.error(f"Failed to requests layer {idx}: {e}")
+            raise e
+
+    app.logger.info("Load_model complete")
+    return jsonify({"message": "Load_model complete"}), 200
+
+
+@app.route('/save_layers', methods=['POST'])
+def save_layers(file_path=LAYERS_FILE):
+    """
+    將 layers 保存到指定檔案。
+    """
+    global layers
+    directory = os.path.dirname(file_path)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory)
+
+    try:
+        with open(file_path, "w") as f:
+            json.dump(layers, f)
+        app.logger.info(f"Successful save layers")
+    except Exception as e:
+        app.logger.error(f"Failed to save layers: {str(e)}")
+        raise e
+    app.logger.info("Save layers complete")
+    return jsonify({"message": "Save layers complete"}), 200
+
+
+def load_layers(file_path=LAYERS_FILE):
+    """
+    從指定檔案讀取 layers。如果檔案不存在，返回空列表。
+    """
+    global layers
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f:
+                layers = json.load(f)
+            app.logger.info(f"Layers loaded successfully from {file_path}")
+        else:
+            app.logger.error(f"No layers file found at {file_path}. Returning empty list.")
+            layers = []
+    except Exception as e:
+        app.logger.error(f"Failed to load layers: {str(e)}")
+        raise e
+
+
 def create_pod(pod_name, layer_type, config):
     """
     創建 Kubernetes Pod。如果同名 Pod 已存在，則刪除並重新創建。
@@ -215,7 +276,8 @@ def create_service(service_name, pod_name):
     app.logger.info(f"Starting create_service for {service_name}")
     try:
         # 檢查是否已存在同名的 Service
-        existing_service = k8s_api.list_namespaced_service(namespace="default", field_selector=f"metadata.name={service_name}")
+        existing_service = k8s_api.list_namespaced_service(namespace="default",
+                                                           field_selector=f"metadata.name={service_name}")
         if existing_service.items:
             app.logger.info(f"Service {service_name} already exists. Deleting it...")
             k8s_api.delete_namespaced_service(name=service_name, namespace="default")
@@ -284,3 +346,4 @@ def wait_for_pod_ready(pod_name, timeout=120):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+    load_layers()

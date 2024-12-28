@@ -59,10 +59,12 @@ def train_model(epochs=5):
     ]
 
     # 創建層
-    # requests.post(LAYER_CONTROLLER_URL + "/create_layers", json={"layers": layers})
+    requests.post(LAYER_CONTROLLER_URL + "/create_layers", json={"layers": layers})
 
     # 初始化層
-    # requests.post(LAYER_CONTROLLER_URL + "/initialize")
+    requests.post(LAYER_CONTROLLER_URL + "/initialize")
+
+    requests.post(LAYER_CONTROLLER_URL + "/save_layers")
 
     for epoch in range(epochs):
         running_loss = 0.0
@@ -132,5 +134,27 @@ def compute_flatten_size(input_size, conv_layers):
     return C * H * W
 
 
+def test_model():
+    # 加载模型
+    requests.post(LAYER_CONTROLLER_URL + "/load_model", json={"model_path": model_path})
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for inputs, labels in test_loader:
+
+            # 前向传播
+            response = requests.post(LAYER_CONTROLLER_URL + "/forward", json={"input": inputs.tolist()})
+
+            outputs = torch.tensor(response.json()["output"], dtype=torch.float32)
+
+            # 获取预测结果
+            _, predicted = torch.max(outputs, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    print(f"测试准确率: {100 * correct / total:.2f}%")
+
+
 if __name__ == "__main__":
     train_model()
+    test_model()
