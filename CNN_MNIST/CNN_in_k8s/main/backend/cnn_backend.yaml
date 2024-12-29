@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cnn-backend
+  labels:
+    app: cnn-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cnn-backend
+  template:
+    metadata:
+      labels:
+        app: cnn-backend
+    spec:
+      containers:
+      - name: cnn-backend
+        image: ycair/cnn_backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: cnn-backend-data
+          mountPath: /app
+      volumes:
+      - name: cnn-backend-data
+        persistentVolumeClaim:
+          claimName: cnn-backend-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cnn-backend-service
+  labels:
+    app: cnn-backend
+spec:
+  selector:
+    app: cnn-backend
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cnn-backend-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+

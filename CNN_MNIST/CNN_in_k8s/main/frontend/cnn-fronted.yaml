@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cnn-frontend
+  labels:
+    app: cnn-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cnn-frontend
+  template:
+    metadata:
+      labels:
+        app: cnn-frontend
+    spec:
+      containers:
+      - name: nginx
+        image: ycair/cnn-frontend:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: cnn-nginx-config-volume
+          mountPath: /etc/nginx/conf.d
+          readOnly: false
+        - name: cnn-nginx-volume
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: cnn-nginx-config-volume
+        configMap:
+          name: cnn-nginx-config
+      - name: cnn-nginx-volume
+        persistentVolumeClaim:
+          claimName: cnn-frontend-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cnn-frontend-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cnn-frontend-service
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: cnn-frontend
+

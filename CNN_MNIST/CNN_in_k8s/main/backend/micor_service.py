@@ -3,7 +3,7 @@ import requests
 import torch
 
 app = Flask(__name__)
-LAYER_CONTROLLER_URL = "http://localhost:32323"
+LAYER_CONTROLLER_URL = "http://layer-controller-service:5000"
 model_path = "./model"
 @app.route('/predict', methods=['POST'])
 def predict():

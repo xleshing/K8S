@@ -16,10 +16,10 @@ transform = transforms.Compose([
 ])
 
 train_dataset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=2048, shuffle=True)
 
 test_dataset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=False)
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=2048, shuffle=False)
 
 # 初始化控制器
 model = LayerController()
@@ -90,6 +90,7 @@ def test_model():
     total = 0
     with torch.no_grad():
         for inputs, labels in test_loader:
+            print(inputs)
             inputs, labels = inputs.to(device), labels.to(device)
 
             # 前向传播
@@ -104,7 +105,7 @@ def test_model():
 
 
 # 执行训练和测试
-train_model(epochs=5)
+# train_model(epochs=5)
 test_model()
 
 # 动态管理层
