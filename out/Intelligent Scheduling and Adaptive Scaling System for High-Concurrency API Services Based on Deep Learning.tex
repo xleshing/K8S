@@ -47,7 +47,7 @@
 
 \zhnumsetup{style=Traditional}
 
-\usepackage[backend=biber]{biblatex}
+\usepackage[backend=biber,style=numeric]{biblatex}
 
 \addbibresource{references.bib}
 
@@ -89,30 +89,32 @@
 
 \item 摘要
 
-    隨著微服務 (Microservices) 和雲原生技術 (Cloud-native) 的普及，現代
+    隨著微服務 (Microservices)
+\cite{1}
+和雲原生技術 (Cloud-native)\cite{2}的普及，現代
     應用系統高度依賴 高併發 API 服務，應用於金融交易、電商促銷、影音
     串流、物聯網等場景，並對 低延遲、高可用性與動態擴展 提出了嚴格要求。
     例如：
 
     金融交易 API 需要毫秒級延遲來確保最佳買賣時機，對資源調度與計
     算負載有極高要求。交易峰值可能在短短幾秒內增加數十倍，若 API 擴展
-    反應過慢，可能導致交易失敗或市場損失。[3]
+    反應過慢，可能導致交易失敗或市場損失。\cite{3}
 
     大型電商平台促銷活動期間（如雙 11 促銷活動），大量用戶同時請求
     API 進行商品查詢、購物車更新、訂單提交，瞬間請求量可達數百萬 QPS
     （Queries Per Second）。傳統的 API 擴展方式無法即時應對流量暴增，可
-    能導致購物車服務崩潰、支付 API 超時，影響用戶體驗與企業營收。[4]
+    能導致購物車服務崩潰、支付 API 超時，影響用戶體驗與企業營收。\cite{4}
 
     社群媒體與影音串流（如 TikTok、YouTube、Instagram）用戶大量發送
     請求以獲取動態、影片內容，並伴隨 AI 推薦計算（如 TikTok For You Feed）。
     服務需要即時擴展，確保推播內容的低延遲傳遞，同時兼顧後端機器學習推
-    理任務的負載平衡。[5]
+    理任務的負載平衡。\cite{5}
 
     物聯網 (IoT) 平台（如智慧城市、工業 4.0）則是有大量 IoT 設備持續
     發送感測數據至雲端 API 進行分析、存儲，且流量具有明顯的時段性波動
     （如白天比晚上流量高）。若 API 無法適應 IoT 端的流量模式，可能導致
     數據擷取延遲或設備無法連接雲端，影響關鍵應用（如智慧交通信號調度）。
-    [6]
+    \cite{6}
 
     然而，現有的 Kubernetes VPA (Vertical Pod Autoscaler) 和 CA (Cluster
     Autoscaler) 在高併發環境下仍存在 資源調度延遲、負載預測不準確與異構
@@ -123,11 +125,11 @@
     發一套 負載預測、智能調度與 SLA 自適應擴展系統，以降低 API 響應時
     間、提高資源利用率，並確保高併發環境下的服務穩定性。
 
-\item 研究動機與研究問題(600字)\label{研究動機}
+\item 研究動機與研究問題\label{研究動機}
 
 \begin{enumerate}[label={(\arabic*)}, leftmargin=\parindent, listparindent=\parindent]
 
-\item\textbf{虛擬化技術（Virtualization）[8]}
+\item\textbf{虛擬化技術（Virtualization）\cite{8}}
 
     虛擬化技術最早可追溯到 1960 年代，最初應用於大型主機（Mainframe）
     系統，用於同時支援多個使用者與處理多道程序。隨著硬體計算資源不斷提
@@ -168,7 +170,7 @@
     代的關係，反而可以在多層架構中協同並行：有些組織會在虛擬機內部再運
     行容器，或者同時維持 VM 與容器協作，以達到最有效的資源配置。
 \item\textbf{
-容器化技術（Containerization）[9]
+容器化技術（Containerization）\cite{9}
 }
 
 容器化技術興起的背景，與虛擬化技術的侷限性不無關係。虛擬化雖然
@@ -218,7 +220,7 @@ Apache Mesos 與 Kubernetes），其中以 Google 開發並開源的 Kubernetes
 最終成為「事實標準」。
 
 \item\textbf{
-Kubernetes[9]
+Kubernetes
 }
 
 Kubernetes，通常縮寫為 K8s，由 Google 於 2014 年以開源方式釋出，
@@ -269,7 +271,7 @@ Pod Autoscaler，能監控 Pod 的 CPU 或記憶體使用率，或其他自訂�
 DevOps 與 GitOps 的流程，能與持續整合/持續交付（CI/CD）工具相結合，
 以達到自動化部署應用的目標。
 
-\item\textbf{微服務（Microservices）[10]}
+\item\textbf{微服務（Microservices）\cite{10}}
 
 微服務（Microservices）是一種軟體架構風格，旨在將龐大而複雜的應
 用程式拆分成若干小規模、可獨立部署與維護的服務模組。每個服務都聚焦
@@ -348,7 +350,7 @@ CI/CD（持續整合/持續交付）管線自動化完成，應用的一切依�
 各平台安裝 Kubernetes，就能擁有統一的部署與管理介面，不受底層環境
 差異影響。
 
-\item\textbf{現有 Kubernetes 擴展機制的挑戰}
+\item\textbf{現有 Kubernetes 擴展機制的挑戰\cite{7}}
 
 目前，許多企業採用 Kubernetes（K8s） 來管理雲端資源，並透過 VPA
 (Vertical Pod Autoscaler) 和 CA (Cluster Autoscaler) 來應對流量變化。然
@@ -373,7 +375,7 @@ Memory 使用率，這在應對突發性高併發流量時顯得效率低下：
 可能被拒絕。
 無法學習歷史數據：VPA 不會根據歷史流量模式來調整策略，無法針對
 每天固定時段的高峰流量（如午餐時段、晚間流量高峰）做出提前擴展的決
-策。[7]
+策。
 
     \end{itemize}
     \item \textbf{研究動機與目標}
@@ -397,7 +399,7 @@ Kubernetes 在高併發 API 服務中的智能調度與自適應擴展問題。
 \end{itemize}
 
 \end{enumerate}
-\item 文獻回顧與探討(600字)
+\item 文獻回顧與探討
 
 容器調度（Container Scheduling）是雲計算和邊緣計算領域的重要研究
 課題，其目標是在動態環境中有效管理資源，確保負載均衡、降低能源消耗
@@ -413,14 +415,14 @@ Modeling）、啟發式演算法（Heuristic Algorithms）、元啟發式演算�
 時調度需求，但易受局部最優解影響。
 \begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
     \item \textbf{
-[11] 區域性感知（Locality-Aware）調度}
+\cite{11} 區域性感知（Locality-Aware）調度}
 
 Diego 等人提出了一種區域性感知（Locality-Aware）的調度機制，透過
 統計方法將負載均衡（Load Balancing）與應用效能（Application Performance）
 統一為一個優化問題，以降低 I/O 和網路流量瓶頸。該方法適用於資料密
 集型應用，並在 CloudFoundry 平台上驗證了其效能優勢。
 \item \textbf{
-[12] Multiopt：多目標最佳化調度
+\cite{12} Multiopt：多目標最佳化調度
 }
 
 Multiopt 是一種基於多目標最佳化（Multi-Objective Optimization）的調
@@ -438,16 +440,14 @@ Multiopt 是一種基於多目標最佳化（Multi-Objective Optimization）的�
 尋，適用於複雜調度問題，但計算開銷較高。
 \begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
     \item \textbf{
-[13] MOO-ACA,GA-MOCA：基於螞蟻演算法（ACO）的容器調度}
+\cite{13} MOO-ACA,GA-MOCA：基於螞蟻演算法（ACO）的容器調度}
 
 MOO-ACA 透過螞蟻演算法（Ant Colony Algorithm, ACO）來考量網路
 傳輸開銷、負載均衡與服務可靠性，運用費洛蒙更新機制提升全域最適性，
 使得容器調度更符合雲端環境的變動需求。
 
     \item \textbf{
-
-
-[14] EECS 與 APSO：基於粒子群最佳化的能效調度
+\cite{14} EECS 與 APSO：基於粒子群最佳化的能效調度
 }
 
 EECS 採用加速粒子群最佳化（APSO）演算法，透過權重加總法
@@ -464,7 +464,7 @@ EECS 採用加速粒子群最佳化（APSO）演算法，透過權重加總法
 量級虛擬化能力，並透過動態資源分配提升系統效率。
 \begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
     \item \textbf{
-[15] 基於容器的虛擬化調度模型
+\cite{15} 基於容器的虛擬化調度模型
     }
 
 該研究提出了一種基於容器虛擬化的節能型工作流調度方法，透過雙向
@@ -481,7 +481,7 @@ Scheduling）來動態管理資源，並減少 VM 遷移開銷。該方法可在
 重分析與演算法結合提升決策準確性。
 \begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
     \item \textbf{
-[16] KCSS：基於 MCDA 的 Kubernetes 容器調度策略
+\cite{16} KCSS：基於 MCDA 的 Kubernetes 容器調度策略
     }
 
 KCSS 透過 TOPSIS 演算法，考量 CPU、記憶體、磁碟使用率、功耗、
@@ -494,7 +494,7 @@ KCSS 透過 TOPSIS 演算法，考量 CPU、記憶體、磁碟使用率、功耗
 }
     \begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
         \item\textbf{
-[17] 容器調度技術的全面調查
+\cite{17} 容器調度技術的全面調查
 }
 
 該研究將當前最先進的容器調度技術歸納為數學建模、啟發式、元啟發
@@ -514,7 +514,7 @@ KCSS 透過 TOPSIS 演算法，考量 CPU、記憶體、磁碟使用率、功耗
 
 本研究旨在解決 Kubernetes 在高併發 API 服務中的調度與自適應擴展問題，其系統架構由三大核心模組組成：負載預測 (Load Prediction)、智能調度 (Intelligent Scheduling) 及自適應擴展 (Adaptive Scaling)。這些模組彼此協作，透過 深度學習 (Deep Learning, DL) 與強化學習 (Reinforcement Learning, RL)，提升 API 調度的準確性、Pod 佈署效率及資源擴展的靈活性，確保高併發場景下的穩定性與效能。
 
-整體架構基於 Kubernetes (K8s) 平台，並整合 自訂 Kubernetes Scheduler [19]來實現更精細化的排程管理。不同於 Kubernetes 內建的 VPA (Vertical Pod Autoscaler) 和 CA (Cluster Autoscaler) 主要依賴 CPU/Memory 使用率來決定資源調度[18]，本研究的系統透過 RNN (Recurrent Neural Network) 負載預測模型、DQN (Deep Q-Network) 排程器及 SLA 驅動的自適應擴展策略，提供更智能的決策機制，以 降低 API 響應時間、提高資源利用率，並減少因擴展延遲而導致的服務中斷。
+整體架構基於 Kubernetes (K8s) 平台，並整合 自訂 Kubernetes Scheduler\cite{19}來實現更精細化的排程管理。不同於 Kubernetes 內建的 VPA (Vertical Pod Autoscaler) 和 CA (Cluster Autoscaler) 主要依賴 CPU/Memory 使用率來決定資源調度\cite{18}，本研究的系統透過 RNN (Recurrent Neural Network) 負載預測模型、DQN (Deep Q-Network) 排程器及 SLA 驅動的自適應擴展策略，提供更智能的決策機制，以 降低 API 響應時間、提高資源利用率，並減少因擴展延遲而導致的服務中斷。
 \begin{enumerate}[label={(\zhdig*)}, leftmargin=\parindent, listparindent=\parindent]
 \item \textbf{
 系統架構組成}
@@ -564,7 +564,7 @@ KCSS 透過 TOPSIS 演算法，考量 CPU、記憶體、磁碟使用率、功耗
 
 \centering
 
-\includegraphics[width=0.9\textwidth]{fig/model.png}
+\includegraphics[width=0.9\textwidth]{../fig/model.png}
 
 \caption{架構圖}
 
@@ -606,6 +606,7 @@ KCSS 透過 TOPSIS 演算法，考量 CPU、記憶體、磁碟使用率、功耗
 
 \item 參考文獻
 
+\printbibliography[heading=none]
 
 \end{enumerate}
 
