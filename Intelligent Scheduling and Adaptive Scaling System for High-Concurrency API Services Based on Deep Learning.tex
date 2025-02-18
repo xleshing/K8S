@@ -16,22 +16,11 @@
 \usepackage{geometry}
 
 \geometry{
-
  a4paper,
-
-
  left=12.7mm,       %左邊界
-
-
  right=12.7mm,      %右邊界
-
-
  top=12.7mm,        %上邊界
-
-
  bottom=12.7mm,     %下邊界
-
-
  }
 
 \usepackage{amssymb}
@@ -125,10 +114,10 @@
     數據擷取延遲或設備無法連接雲端，影響關鍵應用（如智慧交通信號調度）。
     [6]
 
-    然而，現有的 Kubernetes HPA (Horizontal Pod Autoscaler) 和 CA (Cluster
+    然而，現有的 Kubernetes VPA (Vertical Pod Autoscaler) 和 CA (Cluster
     Autoscaler) 在高併發環境下仍存在 資源調度延遲、負載預測不準確與異構
     計算資源適配困難 等挑戰。
-    目前的 HPA 僅依賴 CPU/Memory 負載 來觸發擴展，無法預測即將到
+    目前的 VPA 僅依賴 CPU/Memory 負載 來觸發擴展，無法預測即將到
     來的請求流量，導致擴展決策延遲，影響 API 響應時間與穩定性。因此，
     本研究旨在透過深度學習與強化學習技術，提升 API 調度與擴展策略，開
     發一套 負載預測、智能調度與 SLA 自適應擴展系統，以降低 API 響應時
@@ -361,30 +350,28 @@ CI/CD（持續整合/持續交付）管線自動化完成，應用的一切依�
 
 \item\textbf{現有 Kubernetes 擴展機制的挑戰}
 
-目前，許多企業採用 Kubernetes（K8s） 來管理雲端資源，並透過 HPA
-(Horizontal Pod Autoscaler) 和 CA (Cluster Autoscaler) 來應對流量變化。然
+目前，許多企業採用 Kubernetes（K8s） 來管理雲端資源，並透過 VPA
+(Vertical Pod Autoscaler) 和 CA (Cluster Autoscaler) 來應對流量變化。然
 而，這些現有擴展機制在高併發 API 服務場景下仍存在以下關鍵問題：
 \begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
     \item\textbf{資源調度延遲:}
 
-Kubernetes HPA 依賴 CPU / Memory 閾值監測 來觸發 Pod 擴展，然而
+Kubernetes VPA 依賴 CPU / Memory 閾值監測 來觸發 Pod 擴展，然而
 這種方式屬於被動式反應：
-HPA 需要等到 CPU / Memory 負載超過閾值後才開始擴展，這意味著
-系統已經開始過載才會進行調整，導致響應延遲。
-由於 HPA 監測的時間間隔通常為 15s ~ 30s，再加上 Pod 啟動時間（約
-10~60 秒），整體擴展過程可能超過 1 分鐘，導致 API 服務短期內請求失
+VPA 需要等到 CPU / Memory 負載超過閾值後才開始擴展，這意味著
+系統已經開始過載才會進行調整，並且 VPA 整體擴展過程也會具有一定延遲，從而導致 API 服務短期內請求失
 敗率上升。
 
     \item \textbf{
 負載預測不準確
 }
 
-HPA 無法提前預測 API 流量模式，而是單純依賴當下的 CPU /
+VPA 無法提前預測 API 流量模式，而是單純依賴當下的 CPU /
 Memory 使用率，這在應對突發性高併發流量時顯得效率低下：
 無法預測即將到來的高流量：例如電商促銷開始前的 API 請求量通常
-會呈指數級增長，但 HPA 在負載真正升高前不會觸發擴展，導致初期請求
+會呈指數級增長，但 VPA 在負載真正升高前不會觸發擴展，導致初期請求
 可能被拒絕。
-無法學習歷史數據：HPA 不會根據歷史流量模式來調整策略，無法針對
+無法學習歷史數據：VPA 不會根據歷史流量模式來調整策略，無法針對
 每天固定時段的高峰流量（如午餐時段、晚間流量高峰）做出提前擴展的決
 策。[7]
 
@@ -398,7 +385,7 @@ Kubernetes 在高併發 API 服務中的智能調度與自適應擴展問題。
 \begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
 
     \item 設計基於深度學習（RNN/CNN）的負載預測模型，提前預測 API 流量
-變化，減少 HPA 反應延遲。
+變化，減少 VPA 反應延遲。
 開發基於強化學習（RL）的 Kubernetes Scheduler，根據 API 請求負載與
 異構計算資源的特性，最佳化 Pod 調度策略，提高 GPU/NPU 運算效率。
 
