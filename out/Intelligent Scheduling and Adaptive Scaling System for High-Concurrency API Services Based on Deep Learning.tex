@@ -47,7 +47,7 @@
 
 \zhnumsetup{style=Traditional}
 
-\usepackage[backend=biber,style=numeric]{biblatex}
+\usepackage[backend=biber,style=ieee]{biblatex}
 
 \addbibresource{references.bib}
 
@@ -89,6 +89,21 @@
 
 \item 摘要
 
+    現有的 Kubernetes VPA (Vertical Pod Autoscaler) 和 CA (Cluster
+    Autoscaler) 在高併發環境下仍存在 資源調度延遲、負載預測不準確與異構
+    計算資源適配困難 等挑戰。
+    目前的 VPA 僅依賴 CPU/Memory 負載 來觸發擴展，無法預測即將到
+    來的請求流量，導致擴展決策延遲，影響 API 響應時間與穩定性。因此，
+    本研究旨在透過深度學習與強化學習技術，提升 API 調度與擴展策略，開
+    發一套 負載預測、智能調度與 SLA 自適應擴展系統，以降低 API 響應時
+    間、提高資源利用率，並確保高併發環境下的服務穩定性。
+
+\item 研究動機與研究問題\label{研究動機}
+
+\begin{enumerate}[label={(\arabic*)}, leftmargin=\parindent, listparindent=\parindent]
+
+\item\textbf{研究問題}
+
     隨著微服務 (Microservices)
 \cite{1}
 和雲原生技術 (Cloud-native)\cite{2}的普及，現代
@@ -116,18 +131,60 @@
     數據擷取延遲或設備無法連接雲端，影響關鍵應用（如智慧交通信號調度）。
     \cite{6}
 
-    然而，現有的 Kubernetes VPA (Vertical Pod Autoscaler) 和 CA (Cluster
-    Autoscaler) 在高併發環境下仍存在 資源調度延遲、負載預測不準確與異構
-    計算資源適配困難 等挑戰。
-    目前的 VPA 僅依賴 CPU/Memory 負載 來觸發擴展，無法預測即將到
-    來的請求流量，導致擴展決策延遲，影響 API 響應時間與穩定性。因此，
-    本研究旨在透過深度學習與強化學習技術，提升 API 調度與擴展策略，開
-    發一套 負載預測、智能調度與 SLA 自適應擴展系統，以降低 API 響應時
-    間、提高資源利用率，並確保高併發環境下的服務穩定性。
+\item\textbf{現有 Kubernetes 擴展機制的挑戰\cite{7}}
 
-\item 研究動機與研究問題\label{研究動機}
+目前，許多企業採用 Kubernetes（K8s） 來管理雲端資源，並透過 VPA
+(Vertical Pod Autoscaler) 和 CA (Cluster Autoscaler) 來應對流量變化。然
+而，這些現有擴展機制在高併發 API 服務場景下仍存在以下關鍵問題：
+\begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
+    \item\textbf{資源調度延遲:}
+
+Kubernetes VPA 依賴 CPU / Memory 閾值監測 來觸發 Pod 擴展，然而
+這種方式屬於被動式反應：
+VPA 需要等到 CPU / Memory 負載超過閾值後才開始擴展，這意味著
+系統已經開始過載才會進行調整，並且 VPA 整體擴展過程也會具有一定延遲，從而導致 API 服務短期內請求失
+敗率上升。
+
+    \item \textbf{
+負載預測不準確
+}
+
+VPA 無法提前預測 API 流量模式，而是單純依賴當下的 CPU /
+Memory 使用率，這在應對突發性高併發流量時顯得效率低下：
+無法預測即將到來的高流量：例如電商促銷開始前的 API 請求量通常
+會呈指數級增長，但 VPA 在負載真正升高前不會觸發擴展，導致初期請求
+可能被拒絕。
+無法學習歷史數據：VPA 不會根據歷史流量模式來調整策略，無法針對
+每天固定時段的高峰流量（如午餐時段、晚間流量高峰）做出提前擴展的決
+策。
+
+    \end{itemize}
+    \item \textbf{研究動機與目標}
+
+鑑於上述挑戰，本研究的動機在於透過深度學習與強化學習技術，解決
+Kubernetes 在高併發 API 服務中的智能調度與自適應擴展問題。
+
+本研究的目標是：
+\begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
+
+    \item 設計基於深度學習（RNN/CNN）的負載預測模型，提前預測 API 流量
+變化，減少 VPA 反應延遲。
+開發基於強化學習（RL）的 Kubernetes Scheduler，根據 API 請求負載與
+異構計算資源的特性，最佳化 Pod 調度策略，提高 GPU/NPU 運算效率。
+
+    \item 建立 SLA 驅動的自適應 Cluster Autoscaler（SAA），根據 API 響應時
+間與請求成功率，動態調整 CA 擴展策略，確保高併發服務的穩定性。
+透過這套智能調度與擴展系統，本研究將能夠降低 API 響應時間、提升資
+源利用率、減少高流量衝擊下的請求失敗率，進而提高 API 服務的穩定性
+與效能。
+\end{itemize}
+
+\end{enumerate}
+\item 文獻回顧與探討
 
 \begin{enumerate}[label={(\arabic*)}, leftmargin=\parindent, listparindent=\parindent]
+\item \textbf{文獻回顧}
+\begin{enumerate}[label={(\zhdig*)}, leftmargin=2\parindent, listparindent=\parindent]
 
 \item\textbf{虛擬化技術（Virtualization）\cite{8}}
 
@@ -349,63 +406,16 @@ CI/CD（持續整合/持續交付）管線自動化完成，應用的一切依�
 性與跨平台支援，容器與 Kubernetes 也在這裡發揮關鍵作用：只要可以在
 各平台安裝 Kubernetes，就能擁有統一的部署與管理介面，不受底層環境
 差異影響。
-
-\item\textbf{現有 Kubernetes 擴展機制的挑戰\cite{7}}
-
-目前，許多企業採用 Kubernetes（K8s） 來管理雲端資源，並透過 VPA
-(Vertical Pod Autoscaler) 和 CA (Cluster Autoscaler) 來應對流量變化。然
-而，這些現有擴展機制在高併發 API 服務場景下仍存在以下關鍵問題：
-\begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
-    \item\textbf{資源調度延遲:}
-
-Kubernetes VPA 依賴 CPU / Memory 閾值監測 來觸發 Pod 擴展，然而
-這種方式屬於被動式反應：
-VPA 需要等到 CPU / Memory 負載超過閾值後才開始擴展，這意味著
-系統已經開始過載才會進行調整，並且 VPA 整體擴展過程也會具有一定延遲，從而導致 API 服務短期內請求失
-敗率上升。
-
-    \item \textbf{
-負載預測不準確
-}
-
-VPA 無法提前預測 API 流量模式，而是單純依賴當下的 CPU /
-Memory 使用率，這在應對突發性高併發流量時顯得效率低下：
-無法預測即將到來的高流量：例如電商促銷開始前的 API 請求量通常
-會呈指數級增長，但 VPA 在負載真正升高前不會觸發擴展，導致初期請求
-可能被拒絕。
-無法學習歷史數據：VPA 不會根據歷史流量模式來調整策略，無法針對
-每天固定時段的高峰流量（如午餐時段、晚間流量高峰）做出提前擴展的決
-策。
-
-    \end{itemize}
-    \item \textbf{研究動機與目標}
-
-鑑於上述挑戰，本研究的動機在於透過深度學習與強化學習技術，解決
-Kubernetes 在高併發 API 服務中的智能調度與自適應擴展問題。
-
-本研究的目標是：
-\begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
-
-    \item 設計基於深度學習（RNN/CNN）的負載預測模型，提前預測 API 流量
-變化，減少 VPA 反應延遲。
-開發基於強化學習（RL）的 Kubernetes Scheduler，根據 API 請求負載與
-異構計算資源的特性，最佳化 Pod 調度策略，提高 GPU/NPU 運算效率。
-
-    \item 建立 SLA 驅動的自適應 Cluster Autoscaler（SAA），根據 API 響應時
-間與請求成功率，動態調整 CA 擴展策略，確保高併發服務的穩定性。
-透過這套智能調度與擴展系統，本研究將能夠降低 API 響應時間、提升資
-源利用率、減少高流量衝擊下的請求失敗率，進而提高 API 服務的穩定性
-與效能。
-\end{itemize}
-
 \end{enumerate}
-\item 文獻回顧與探討
+
+\item \textbf{文獻探討}
 
 容器調度（Container Scheduling）是雲計算和邊緣計算領域的重要研究
 課題，其目標是在動態環境中有效管理資源，確保負載均衡、降低能源消耗
-並提升應用效能。現有的研究方法可分為\textbf{數學建模（Mathematical
+並提升應用效能。現有的研究方法\cite{17}可分為\textbf{數學建模（Mathematical
 Modeling）、啟發式演算法（Heuristic Algorithms）、元啟發式演算法（MetaHeuristic Algorithms）、機器學習（Machine Learning）}等不同類別，本文
 將基於近期的研究成果進行綜合探討。
+
 \begin{enumerate}[label={(\arabic*)}, leftmargin=\parindent, listparindent=\parindent]
 
     \item \textbf{
@@ -489,21 +499,8 @@ KCSS 透過 TOPSIS 演算法，考量 CPU、記憶體、磁碟使用率、功耗
 效率為主要目標來優化 Kubernetes 調度決策。
 
     \end{itemize}
-    \item \textbf{
-當前最先進的容器調度技術總結與未來方向
-}
-    \begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
-        \item\textbf{
-\cite{17} 容器調度技術的全面調查
-}
 
-該研究將當前最先進的容器調度技術歸納為數學建模、啟發式、元啟發
-式、機器學習四大類，並針對資源利用率、負載均衡、可擴展性、能效等關
-鍵效能指標進行分析，指出未來研究方向應包括：AI 驅動的智慧調度（如
-強化學習 Reinforcement Learning）、邊緣計算環境的適應性、跨雲與混合雲
-調度策略
-
-        \end{itemize}
+\end{enumerate}
 \end{enumerate}
 \item 研究方法及步驟
 \begin{enumerate}[label={(\arabic*)}, leftmargin=\parindent, listparindent=\parindent]
@@ -557,18 +554,7 @@ KCSS 透過 TOPSIS 演算法，考量 CPU、記憶體、磁碟使用率、功耗
 \end{enumerate}
 
 \end{enumerate}
-    \item \textbf{
-系統架構圖}
 
-\begin{figure} [htbp]
-
-\centering
-
-\includegraphics[width=0.9\textwidth]{../fig/model.png}
-
-\caption{架構圖}
-
-\end{figure}\newpage
 
 \item \textbf{
 模組詳細說明}
@@ -599,6 +585,19 @@ KCSS 透過 TOPSIS 演算法，考量 CPU、記憶體、磁碟使用率、功耗
 該模組根據 集群壓力預測結果，動態調整 Kubernetes Cluster 節點的數量，確保系統擁有足夠的計算資源應對 API 請求負載，避免因資源不足而導致 API 響應時間增加或請求丟失。
 
 \end{enumerate}
+\item \textbf{
+系統架構圖}
+
+\begin{figure} [htbp]
+
+\centering
+
+\includegraphics[width=0.9\textwidth]{../fig/model.png}
+
+\caption{架構圖}
+
+\end{figure}\newpage
+
 \end{enumerate}
 \item 預期結果
 
