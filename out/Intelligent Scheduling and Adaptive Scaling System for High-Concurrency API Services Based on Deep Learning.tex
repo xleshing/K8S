@@ -5,8 +5,8 @@
 
 \usepackage[BoldFont]{xeCJK}
 
-\setCJKmainfont{BiauKaiTC}                % 中文字型使用標楷體
-%\setCJKmainfont{DFKai-SB}
+%\setCJKmainfont{BiauKaiTC}                % 中文字型使用標楷體
+\setCJKmainfont{DFKai-SB}
 \setmainfont{Times New Roman}          % 如果英文字型是 Times New Roman 則取消這行註解
 
 \XeTeXlinebreaklocale "zh"             % 這兩行一定要加，中文才能自動換行
@@ -89,11 +89,11 @@ bottom=12mm,     %下邊界
 
 \item 摘要
 
-本研究計畫以「預測先行、SLA 驅動與智能調度」
-三大核心手段，針對高併發 API 服務所面臨的資
+本研究計畫以「預測先行、服務水準協議 (Service-Level Agreement, SLA) 驅動與智能調度」
+三大核心手段，針對高併發應用程式介面 (Application Program Interface, API) 服務所面臨的資
 源調度與負載激增問題，提出一套整合深度學習、
-強化學習與容器編排的智能化系統，透過 CNN 與
-LSTM 模型進行集群與 Pod 層級的負載預測，以達
+強化學習與容器編排的智能化系統，透過卷積神經網路 (Convolutional Neural Network, CNN)
+與長短期記憶模型 (Long Short-Term Memory, LSTM) 進行集群與 Pod 層級的負載預測，以達
 到主動式擴縮集群的目的，避免因其而造成的服務延遲或中斷。
 
 系統額外加入了多重動態門檻監控模組，
@@ -101,11 +101,11 @@ LSTM 模型進行集群與 Pod 層級的負載預測，以達
 與請求成功率等指標，協助動態調整 SLA 閾值，
 並為了讓 Pod 分配至最佳節點以提升資源利用率
 與降低延遲，整合元啟發式演算法優化
-Kubernetes Scheduler，
+Kubernetes 的排程器 (Scheduler)。
 
 此外，系統中的自適應
 集群擴縮模組與特別加入的冷卻機制，可根據負載
-預測結果和 SLO 目標，動態增減叢集節點與容器
+預測結果和服務級別目標 (Service-level objective, SLO)，動態增減叢集節點與容器
 數量與避免頻繁震盪。
 
 此架構不僅可應用於電商促銷、金融交易及 IoT
@@ -275,14 +275,13 @@ MCDA 方法適用於多維度資源調度問題，可透過權
 資源時，仍需要更先進的預測與自適應機制。本研究據此提
 出以下研究目標 ：
 \begin{itemize}[leftmargin=\parindent, listparindent=\parindent]
-    \item\textbf{整合深度學習與強化學習技術}
+    \item\textbf{使用深度學習進行負載預測}
 
 大部分現有調度方法強調即時反應與負載均衡，
 但對於高併發的動態流量，若無法事先預測負載
 波動，將容易陷入資源不足或過量的困境，導致
 效能不穩定或資源浪費。因此，本計畫擬設計基於
-深度學習 (如 RNN/CNN) 的負載預測模型，並
-引入強化學習 (Reinforcement Learning, RL)。
+深度學習 (如 RNN/CNN) 的負載預測模型，來達成主動式擴展集群。
 
     \item\textbf{服務級別協定 (Service-Level Agreement, SLA) 驅動的自適應 CA}
 
@@ -543,7 +542,7 @@ Kubernetes HPA (Horizontal Pod Autoscaler) 更快恢復到目標 SLA 水準。
 
     \item \textbf{集群負載預測模組 (Cluster Load Prediction Module)：}
 
-        採用深度學習模型：CNN，持續預測未來一段時間集群工作負載，
+        採用深度學習模型：卷積神經網路 (Convolutional Neural Network, CNN)，持續預測未來一段時間集群工作負載，
         透過監控與指標模組擷取集群總 CPU/記憶體使用率
         、歷史請求量 (Requests per Second, RPS) 等監控數據
         ，得出預測結果，提前規劃資源需求，
@@ -552,8 +551,8 @@ Kubernetes HPA (Horizontal Pod Autoscaler) 更快恢復到目標 SLA 水準。
 
     \item \textbf{Pod 負載預測模組 (Pod Load Prediction Module)：}
 
-        與集群負載預測模組不同 Pod 負載預測模組採用長短期記憶模型
-        LSTM，持續預測 Pod 未來短期與長期的工作負載，
+        與集群負載預測模組不同 Pod 負載預測模組採用長短期記憶模型 (Long Short-Term Memory, LSTM)
+        ，持續預測 Pod 未來短期與長期的工作負載，
         透過監控與指標模組擷取每個 Pod 的 CPU/記憶體使用率
         、歷史請求量 (Requests per Second, RPS) 等監控數據並得出預測結果後
         調用 H/VPA，以避免服務本身因資源不夠而中斷或產生延遲。
