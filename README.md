@@ -30,7 +30,11 @@ sudo containerd config default > /etc/containerd/config.toml
 ```
 ### 調整 cgroup 驅動
 ```
-/etc/containerd/config.toml -> SystemCgroup = true
+sudo vim /etc/containerd/config.toml
+```
+```
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+SystemCgroup = false -> true
 ```
 > Node到此即可
 ### init k8s
