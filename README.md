@@ -24,6 +24,12 @@ EOF
 ```
 ---
 ### 下載docker
+---
+### 提升權限
+```
+sudo usermod -aG docker icanlab
+```
+>logout -> login
 
 ---
 ### 下載container runtime
