@@ -12,6 +12,11 @@ sudo vim /etc/fstab ，sudo vim /etc/fstab
 
 ---
 ### 啟用ip4轉發
+暫時
+```
+sudo sysctl -w net.ipv4.ip_forward=1
+```
+永久
 ```
 cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.ipv4.ip_forward = 1
