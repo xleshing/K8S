@@ -36,6 +36,9 @@ sudo vim /etc/containerd/config.toml
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
 SystemCgroup = false -> true
 ```
+```
+sudo systemctl restart containerd
+```
 > Node到此即可
 ### init k8s
 ```
