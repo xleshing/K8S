@@ -33,6 +33,10 @@ sudo containerd config default > /etc/containerd/config.toml
 /etc/containerd/config.toml -> SystemCgroup = true
 ```
 > Node到此即可
+### init k8s
+```
+sudo kubeadm init --cri-socket unix:///var/run/containerd/containerd.sock
+```
 ---
 ### 下載calico
 
