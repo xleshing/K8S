@@ -53,7 +53,7 @@ SystemCgroup = false -> true
 ```
 sudo systemctl restart containerd
 ```
-> Node到此即可
+> Node到此即可(sudo hostnamectl set-hostname new-hostname)
 ### init k8s
 ```
 sudo kubeadm init --cri-socket unix:///var/run/containerd/containerd.sock
