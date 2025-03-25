@@ -33,6 +33,9 @@ sudo usermod -aG docker icanlab
 
 ---
 ### 下載container runtime
+```
+sudo apt install containerd
+```
 
 ### 產生預設配置
 ```
