@@ -3,7 +3,7 @@
 ---
 ### 關閉swap
 ```
-sudo vim /etc/fstab ，sudo vim /etc/fstab
+sudo vim /etc/fstab 
 ```
 ### 將```/swap.img      none    swap    sw      0       0``` 注釋
 
