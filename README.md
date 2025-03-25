@@ -56,7 +56,7 @@ sudo systemctl restart containerd
 > Node到此即可(sudo hostnamectl set-hostname new-hostname)
 ### init k8s
 ```
-sudo kubeadm init --cri-socket unix:///var/run/containerd/containerd.sock
+sudo kubeadm init --cri-socket unix:///var/run/containerd/containerd.sock --pod-network-cidr=<ip/mask> --control-plane-endpoint <ip>
 ```
 ---
 ### 下載calico
