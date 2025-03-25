@@ -1,4 +1,4 @@
-# K8s Guide
+# K8s on Ubuntu Guide
 
 ---
 ### 關閉swap
@@ -8,8 +8,7 @@ sudo vim /etc/fstab
 ### 將```/swap.img      none    swap    sw      0       0``` 注釋
 
 ---
-### 下載kubectl, kubeadm, kubelet
-
+### 下載[kubectl, kubeadm, kubelet](https://kubernetes.io/docs/setup/)
 ---
 ### 啟用ip4轉發
 暫時
@@ -23,7 +22,7 @@ net.ipv4.ip_forward = 1
 EOF
 ```
 ---
-### 下載docker
+### 下載[docker](https://docs.docker.com/engine/install/ubuntu/)
 ---
 ### 提升權限
 ```
@@ -59,8 +58,7 @@ sudo systemctl restart containerd
 sudo kubeadm init --cri-socket unix:///var/run/containerd/containerd.sock --pod-network-cidr=<ip/mask> --control-plane-endpoint <ip>
 ```
 ---
-### 下載calico
-
+### 下載[calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/quickstart)
 ---
 second scheduler:
 
