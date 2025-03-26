@@ -27,7 +27,7 @@ net.ipv4.ip_forward = 1
 EOF
 ```
 ---
-### 下載[kubectl, kubeadm, kubelet](https://kubernetes.io/docs/setup/)
+### 下載[kubectl, kubeadm, kubelet](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
 ---
 ### 下載[docker](https://docs.docker.com/engine/install/ubuntu/)
 > docker在下載時會自動下載配套版本的containerd，如果有特殊需求再另外下載``` sudo apt install containerd ```
