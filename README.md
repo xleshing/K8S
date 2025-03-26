@@ -14,9 +14,6 @@ sudo vim /etc/fstab
 ```UUID=xxxx-xxxx    none    swap    sw    0   0``` \
 或是： \
 ```/dev/sdX#   none    swap    sw    0   0```
-
----
-### 下載[kubectl, kubeadm, kubelet](https://kubernetes.io/docs/setup/)
 ---
 ### 啟用ipv4轉發
 暫時
@@ -30,26 +27,23 @@ net.ipv4.ip_forward = 1
 EOF
 ```
 ---
+### 下載[kubectl, kubeadm, kubelet](https://kubernetes.io/docs/setup/)
+---
 ### 下載[docker](https://docs.docker.com/engine/install/ubuntu/)
+> docker在下載時會自動下載配套版本的containerd，如果有特殊需求再另外下載``` sudo apt install containerd ```
 ---
 ### 提升權限
 ```
 sudo usermod -aG docker icanlab
 ```
 >重新登錄去更新權限狀態
-
 ---
-### 下載container runtime
-```
-sudo apt install containerd
-```
-
-### 產生預設配置
+### 產生containerd預設配置
 ```
 sudo mkdir -p /etc/containerd
 sudo containerd config default | sudo tee /etc/containerd/config.toml
 ```
-### 調整 cgroup 驅動
+### 調整containerd 的 cgroup 驅動
 ```
 sudo vim /etc/containerd/config.toml
 ```
