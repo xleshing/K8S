@@ -3,13 +3,17 @@
 ---
 ### 關閉swap
 ```
-free -m
+swapon --show
 ```
-> 查看系统是否挂在SWAP
+> 確認有沒有啟用 swap如果，沒有任何輸出，代表目前系統沒有啟用 swap
 ```
 sudo vim /etc/fstab 
 ```
 將/swapfile所在行注釋
+>Swap 在 /etc/fstab 裡的樣子會像這樣： \
+```UUID=xxxx-xxxx    none    swap    sw    0   0``` \
+或是： \
+```/dev/sdX#   none    swap    sw    0   0```
 
 ---
 ### 下載[kubectl, kubeadm, kubelet](https://kubernetes.io/docs/setup/)
