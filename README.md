@@ -3,14 +3,18 @@
 ---
 ### 關閉swap
 ```
+free -m
+```
+> 查看系统是否挂在SWAP
+```
 sudo vim /etc/fstab 
 ```
-### 將```/swap.img      none    swap    sw      0       0``` 注釋
+將/swapfile所在行注釋
 
 ---
 ### 下載[kubectl, kubeadm, kubelet](https://kubernetes.io/docs/setup/)
 ---
-### 啟用ip4轉發
+### 啟用ipv4轉發
 暫時
 ```
 sudo sysctl -w net.ipv4.ip_forward=1
@@ -28,7 +32,7 @@ EOF
 ```
 sudo usermod -aG docker icanlab
 ```
->logout -> login
+>重新登錄去更新權限狀態
 
 ---
 ### 下載container runtime
