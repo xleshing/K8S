@@ -14,6 +14,11 @@ sudo vim /etc/fstab
 ```UUID=xxxx-xxxx    none    swap    sw    0   0``` \
 或是： \
 ```/dev/sdX#   none    swap    sw    0   0```
+
+暫時關閉swap
+```
+sudo swapoff -a
+```
 ---
 ### 啟用ipv4轉發
 暫時
@@ -34,7 +39,7 @@ EOF
 ---
 ### 提升權限
 ```
-sudo usermod -aG docker icanlab
+sudo usermod -aG docker <user>
 ```
 >重新登錄去更新權限狀態
 ---
@@ -54,7 +59,14 @@ SystemCgroup = false -> true
 ```
 sudo systemctl restart containerd
 ```
-> Node到此即可(sudo hostnamectl set-hostname new-hostname)
+> Node到此即可(更改hostname:sudo hostnamectl set-hostname new-hostname)
+
+運行一段時間後加入節點需生成新token(預設 token 有效期 24hr)與ca證書的sha256編碼hash值
+```
+kubeadm token create --print-join-command
+```
+>此為直接生成join指令
+
 ### init k8s
 ```
 sudo kubeadm init --cri-socket unix:///var/run/containerd/containerd.sock --pod-network-cidr=<ip/mask> --control-plane-endpoint <ip>
