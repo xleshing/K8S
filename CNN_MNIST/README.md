@@ -10,26 +10,7 @@
 
 ## 1. 架構一覽
 
-```
-┌───────────────┐     HTTP/JSON        ┌────────────────────┐
-│    main.py    │ ───────────────────► │  Layer Controller  │
-│  (Trainer)    │                      │  <Flask + k8s API> │
-└───────────────┘                      └─────────┬──────────┘
-                 create_pod / forward / backward │
-                                                 ▼
-                                   ┌────────────────────────┐
-                                   │  layer-0 Service (Conv)│
-                                   └────────────────────────┘
-                                   ┌────────────────────────┐
-                                   │  layer-1 Service (Conv)│
-                                   └────────────────────────┘
-                                   ┌────────────────────────┐
-                                   │  layer-2 Service (FC)  │
-                                   └────────────────────────┘
-                                   ┌────────────────────────┐
-                                   │  … (更多層) …          │
-                                   └────────────────────────┘
-```
+![image](https://github.com/xleshing/K8S/blob/main/CNN_MNIST/architecture.png)
 
 ---
 
@@ -123,5 +104,3 @@
 
 ---
 
-## 6. Architecture Diagram
-![image](https://github.com/xleshing/K8S/blob/main/CNN_MNIST/architecture.png)
