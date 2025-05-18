@@ -4,21 +4,21 @@
 flowchart TD
     %% ===== Client =====
     subgraph Client
-        A[Researcher&nbsp;main.py] -- REST --> B[/Layer&nbsp;Controller/]
+        A[Researcher main.py] -->|REST| B[Layer&nbsp;Controller]
     end
 
     %% ===== Cluster =====
-    subgraph Kubernetes&nbsp;Cluster
+    subgraph Kubernetes_Cluster
         %% Controller → K8s API
-        B -- K8s&nbsp;API --> API[(API&nbsp;Server)]
+        B -->|calls&nbsp;K8s&nbsp;API| API[(API&nbsp;Server)]
 
         %% Controller 動態產生 Layer Pods
-        B ..>|creates| L0[Layer&nbsp;Pod&nbsp;0]
-        B ..>|creates| LN[Layer&nbsp;Pod&nbsp;N]
+        B -.|creates|.-> L0[Layer&nbsp;Pod&nbsp;0]
+        B -.|creates|.-> LN[Layer&nbsp;Pod&nbsp;N]
 
         %% ===== Forward pass =====
         B -->|/forward| L0
-        L0 -->|/forward| Lmid[⋯ other layers ⋯]
+        L0 -->|/forward| Lmid[…]
         Lmid -->|/forward| LN
         LN -->|output| B
 
@@ -29,7 +29,7 @@ flowchart TD
         L0 <--|grad| B
 
         %% ===== Persistence =====
-        B -- save/load --> PVC[(Persistent&nbsp;Volume)]
+        B -->|save&nbsp;/&nbsp;load| PVC[(Persistent&nbsp;Volume)]
     end
 
     classDef ctl fill:#ffd,stroke:#333;
