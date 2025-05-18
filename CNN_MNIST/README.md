@@ -4,28 +4,33 @@
 flowchart TD
     %% ===== Client =====
     subgraph Client
-        A[Researcher main.py] -- REST --> B[/Layer Controller/]
+        A[Researcher&nbsp;main.py] -- REST --> B[/Layer&nbsp;Controller/]
     end
 
     %% ===== Cluster =====
-    subgraph Kubernetes Cluster
-        B -- K8s API --> API[(API Server)]
+    subgraph Kubernetes&nbsp;Cluster
+        %% Controller → K8s API
+        B -- K8s&nbsp;API --> API[(API&nbsp;Server)]
 
-        B .. creates .. L0[Layer Service Pod 0]
-        B .. creates .. LN[Layer Service Pod N]
+        %% Controller 動態產生 Layer Pods
+        B ..>|creates| L0[Layer&nbsp;Pod&nbsp;0]
+        B ..>|creates| LN[Layer&nbsp;Pod&nbsp;N]
+
+        %% ===== Forward pass =====
         B -->|/forward| L0
-        L0 -->|/forward| L1[…]
-        LN -->|/forward (final)| B
+        L0 -->|/forward| Lmid[⋯ other layers ⋯]
+        Lmid -->|/forward| LN
+        LN -->|output| B
 
-        %% Back-prop
-        B -->|/backward| LN
-        LN -->|/backward| L1
-        L1 -->|/backward| L0
-        L0 -->|grad→| B
+        %% ===== Back-prop =====
+        B <--|/backward| LN
+        LN <--|/backward| Lmid
+        Lmid <--|/backward| L0
+        L0 <--|grad| B
 
-        %% Persistence
-        B -- save/load --> PVC[(PersistentVolume)]
+        %% ===== Persistence =====
+        B -- save/load --> PVC[(Persistent&nbsp;Volume)]
     end
 
-    classDef c1 fill:#ffd,stroke:#333;
-    class B,L0,LN,L1 c1;
+    classDef ctl fill:#ffd,stroke:#333;
+    class B,L0,Lmid,LN ctl;
