@@ -91,16 +91,4 @@
 * **動態展平大小**：`compute_flatten_size()` 依 conv/pool 超參數計算 FC in\_features 。
 * **訓練迴圈**：epochs × batches → 前傳/計損失/反傳。
 
----
-
-## 5. 延伸與最佳化方向
-
-| 主題               | 說明                                                                 |
-| ---------------- | ------------------------------------------------------------------ |
-| **Auto-scaling** | 透過 HPA 或自訂指標（迴圈秒數、GPU/CPU 負載）來縮放指定卷積層 Pod。                         |
-| **複合層**          | 可新增 BatchNorm、Dropout 等 layer\_type，在 Layer Service 中擴寫 `if…elif`。 |
-| **服務網格**         | 將層間流量接入 Istio，以觀察延遲、重試與熔斷。                                         |
-| **資料並行**         | 在 Controller 端一次同批 broadcast 給多個通道，於外層再做聚合，以支援多卡訓練。                |
-
----
 
