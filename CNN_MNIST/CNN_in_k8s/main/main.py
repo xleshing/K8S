@@ -40,8 +40,7 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-def train_model(epochs=5):
-
+def initialize():
     conv_layers = [
         {"out_channels": 32, "kernel_size": 3, "padding": 0, "pool_size": 2},  # ConvLayer 1
         {"out_channels": 64, "kernel_size": 3, "padding": 0, "pool_size": 2},  # ConvLayer 2
@@ -66,6 +65,8 @@ def train_model(epochs=5):
 
     requests.post(LAYER_CONTROLLER_URL + "/save_layers")
 
+
+def train_model(epochs=5):
     for epoch in range(epochs):
         running_loss = 0.0
         for batch_idx, (inputs, labels) in enumerate(train_loader):
@@ -141,7 +142,6 @@ def test_model():
     total = 0
     with torch.no_grad():
         for batch_idx, (inputs, labels) in enumerate(test_loader):
-
             message = (f"Current batch index: {batch_idx + 1}, "
                        f"Total batches: {len(test_loader)}")
             logger.info(message)
@@ -165,5 +165,6 @@ def test_model():
 
 
 if __name__ == "__main__":
+    initialize()
     train_model()
     test_model()
