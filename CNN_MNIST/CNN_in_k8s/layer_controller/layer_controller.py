@@ -243,22 +243,34 @@ def create_pod(pod_name, layer_type, config):
         # 檢查是否已存在同名的 Pod
         existing_pod = k8s_api.list_namespaced_pod(namespace="default", field_selector=f"metadata.name={pod_name}")
         if existing_pod.items:
-            app.logger.info(f"Pod {pod_name} already exists. Deleting it...")
-            k8s_api.delete_namespaced_pod(name=pod_name, namespace="default")
+            app.logger.info(f"Pod {pod_name} already exists. Forcing deletion...")
+            # 使用 force delete（grace_period_seconds=0, propagation_policy='Foreground'）
+            delete_opts = client.V1DeleteOptions(
+                grace_period_seconds=0,
+                propagation_policy='Foreground'
+            )
+            k8s_api.delete_namespaced_pod(
+                name=pod_name,
+                namespace="default",
+                body=delete_opts
+            )
             # 等待 Pod 被刪除
             wait_for_deletion(pod_name, "pod")
 
         # 創建新的 Pod
         container = client.V1Container(
             name=pod_name,
-            image="ycair/cnn_layer_service",  # 替換為您的 Docker 映像名稱
+            image="icanlab/cnn_layer_service",  # 替換為您的 Docker 映像名稱
             env=[
                 client.V1EnvVar(name="LAYER_TYPE", value=layer_type),
                 client.V1EnvVar(name="LAYER_CONFIG", value=json.dumps(config)),
             ],
             ports=[client.V1ContainerPort(container_port=5000)],
         )
-        spec = client.V1PodSpec(containers=[container])
+        spec = client.V1PodSpec(
+            containers=[container],
+            node_selector={"kubernetes.io/arch": "amd64"}
+        )
         metadata = client.V1ObjectMeta(name=pod_name, labels={"app": pod_name})
         pod = client.V1Pod(spec=spec, metadata=metadata)
 
@@ -326,7 +338,7 @@ def wait_for_deletion(resource_name, resource_type, namespace="default", timeout
     raise TimeoutError(f"Timeout waiting for {resource_type} {resource_name} to be deleted.")
 
 
-def wait_for_pod_ready(pod_name, timeout=120):
+def wait_for_pod_ready(pod_name, timeout=180):
     """
     等待 Pod 變為 Ready 狀態。
     """

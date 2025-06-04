@@ -23,26 +23,26 @@ spec:
         - name: cnn-nginx-config-volume
           mountPath: /etc/nginx/conf.d
           readOnly: false
-        - name: cnn-nginx-volume
-          mountPath: /usr/share/nginx/html
+#        - name: cnn-nginx-volume
+#          mountPath: /usr/share/nginx/html
       volumes:
       - name: cnn-nginx-config-volume
         configMap:
           name: cnn-nginx-config
-      - name: cnn-nginx-volume
-        persistentVolumeClaim:
-          claimName: cnn-frontend-pvc
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: cnn-frontend-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+#      - name: cnn-nginx-volume
+#        persistentVolumeClaim:
+#          claimName: cnn-frontend-pvc
+#---
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  name: cnn-frontend-pvc
+#spec:
+#  accessModes:
+#    - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 1Gi
 ---
 apiVersion: v1
 kind: Service

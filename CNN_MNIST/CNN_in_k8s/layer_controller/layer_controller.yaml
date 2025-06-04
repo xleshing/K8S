@@ -44,17 +44,17 @@ spec:
       serviceAccountName: layer-controller-sa
       containers:
       - name: layer-controller
-        image: ycair/cnn_layer_controller:latest
+        image: icanlab/cnn_layer_controller:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
-        volumeMounts:
-        - name: layer-controller-data
-          mountPath: /app
-      volumes:
-      - name: layer-controller-data
-        persistentVolumeClaim:
-          claimName: layer-controller-pvc
+#        volumeMounts:
+#        - name: layer-controller-data
+#          mountPath: /app
+#      volumes:
+#      - name: layer-controller-data
+#        persistentVolumeClaim:
+#          claimName: layer-controller-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -69,15 +69,15 @@ spec:
   - protocol: TCP
     port: 5000
     targetPort: 5000
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: layer-controller-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
+#---
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  name: layer-controller-pvc
+#spec:
+#  accessModes:
+#    - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 10Gi
 

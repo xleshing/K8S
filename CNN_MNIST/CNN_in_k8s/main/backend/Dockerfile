@@ -4,6 +4,8 @@ FROM python:3.9-slim
 # 设置工作目录
 WORKDIR /app
 
+COPY ./* /app/
+
 # 安装系统依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc && \
@@ -17,4 +19,3 @@ EXPOSE 5000
 
 # 启动应用程序
 CMD ["python", "app.py"]
-
