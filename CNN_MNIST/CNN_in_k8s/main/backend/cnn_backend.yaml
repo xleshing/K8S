@@ -14,6 +14,8 @@ spec:
       labels:
         app: cnn-backend
     spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
       containers:
       - name: cnn-backend
         image: icanlab/cnn_backend:latest
