@@ -269,7 +269,7 @@ def create_pod(pod_name, layer_type, config):
         )
         spec = client.V1PodSpec(
             containers=[container],
-            node_selector={"kubernetes.io/arch": "amd64"}
+            node_selector={"beta.kubernetes.io/arch": "amd64"}
         )
         metadata = client.V1ObjectMeta(name=pod_name, labels={"app": pod_name})
         pod = client.V1Pod(spec=spec, metadata=metadata)

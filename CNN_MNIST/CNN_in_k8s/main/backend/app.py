@@ -4,7 +4,7 @@ import torch
 
 app = Flask(__name__)
 LAYER_CONTROLLER_URL = "http://layer-controller-service:5000"
-model_path = "./model"
+model_path = "./"
 @app.route('/predict', methods=['POST'])
 def predict():
     requests.post(LAYER_CONTROLLER_URL + "/load_model", json={"model_path": model_path})
