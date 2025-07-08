@@ -1,6 +1,6 @@
 ## 檔案說明
 
-- ansible.cfg 
+- ansible.cfg
 : Ansible 全域設定檔，目前設定了python interpreter 位置與 remote_tmp 位置
 
 - group_vars
@@ -13,15 +13,15 @@
 - k8s.yml
 : 主 Playbook
 
-- xxxx.pem
+- kp1751511188256.pem
 : SSH Key
 
-- library/master_init.py, library/slave_init.py
+- library/*
 : 自訂 module，負責 master, worker 節點初始化
 
-- roles/install-cilium/, roles/install-k8s-deps/
-: 安裝 Cilium CNI 與 安裝 Kubernetes 依賴套件（Docker、kubeadm、kubectl、kubelet 等）的 role
- 
+- roles/*
+: 安裝 Cilium CNI, Kubernetes 依賴套件（Docker、kubeadm、kubectl、kubelet 等）與 NVIDIA GPU Operator 的 role
+
 ---
 ## 使用方法
 ```
