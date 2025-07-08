@@ -13,7 +13,7 @@
 - k8s.yml
 : 主 Playbook
 
-- kp1751511188256.pem
+- xxxx.pem
 : SSH Key
 
 - library/*
