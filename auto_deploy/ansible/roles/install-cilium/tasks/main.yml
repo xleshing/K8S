@@ -1,0 +1,52 @@
+- name: Fetch Cilium CLI stable version
+  ansible.builtin.uri:
+    url: https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt
+    return_content: yes
+  register: cli_version_resp
+
+- name: Set fact cilium_cli_version
+  ansible.builtin.set_fact:
+    cilium_cli_version: "{{ cli_version_resp.content | trim }}"
+
+- name: Set fact cilium_cli_arch
+  ansible.builtin.set_fact:
+    cilium_cli_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+
+- name: Download Cilium CLI tarball
+  ansible.builtin.get_url:
+    url: "https://github.com/cilium/cilium-cli/releases/download/{{ cilium_cli_version }}/cilium-linux-{{ cilium_cli_arch }}.tar.gz"
+    dest: "/tmp/cilium-linux-{{ cilium_cli_arch }}.tar.gz"
+    mode: '0755'
+
+- name: Download Cilium CLI sha256sum
+  ansible.builtin.get_url:
+    url: "https://github.com/cilium/cilium-cli/releases/download/{{ cilium_cli_version }}/cilium-linux-{{ cilium_cli_arch }}.tar.gz.sha256sum"
+    dest: "/tmp/cilium-linux-{{ cilium_cli_arch }}.tar.gz.sha256sum"
+    mode: '0644'
+
+- name: Verify Cilium CLI checksum
+  ansible.builtin.command:
+    cmd: "sha256sum --check cilium-linux-{{ cilium_cli_arch }}.tar.gz.sha256sum"
+  args:
+    chdir: /tmp
+
+- name: Extract Cilium CLI binary
+  ansible.builtin.unarchive:
+    src: "/tmp/cilium-linux-{{ cilium_cli_arch }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+
+- name: Run cilium install
+  ansible.builtin.command: >
+    cilium install
+      --version {{ cilium_version }}
+      --helm-set clusterPoolIPv4.cidr={{ cilium_cluster_cidr }}
+      --helm-set ipv4NativeRoutingCIDR={{ cilium_cluster_cidr }}
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf 
+  register: cilium_output
+  changed_when: "'Already installed' not in cilium_output.stdout"
+
+- name: Debug Cilium install output
+  ansible.builtin.debug:
+    msg: "{{ cilium_output.stdout }}"

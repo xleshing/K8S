@@ -1,0 +1,55 @@
+- name: install k8s-deps (Docker, containerd, kubelet/kubeadm/kubectl)
+  hosts: masters,nodes
+  become: true
+  vars:
+    ansible_become_password: "{{ secret }}"
+  roles:
+    - install-k8s-deps
+
+- name: Deploy Kubernetes Master and generate tokens
+  hosts: masters 
+  become: true 
+  vars:
+    ansible_become_password: "{{ secret }}"
+  tasks:     
+    - name: Init Kubernetes Master
+      master_init:
+        pod_cidr: "{{ master_cidr_args }}"
+        control_endpoint: "{{ master_endpoint_args }}"
+        kube_user: "{{ ansible_user }}"
+      register: init_out
+    - debug:
+        msg:
+          - "pod cidr: {{ master_cidr_args }}"
+          - "join_endpoint: {{ init_out.join_endpoint }}"
+          - "token: {{ init_out.token }}"
+          - "discovery_token_hash: {{ init_out.discovery_token_hash }}"
+
+- name: Deploy Kubernetes Worker and using tokens
+  hosts: nodes                    
+  become: true                
+  vars:
+    ansible_become_password: "{{ secret }}"
+    master_host: "{{ groups['masters'][0] }}"
+    join_endpoint: "{{ hostvars[master_host].init_out.join_endpoint }}"
+    token: "{{ hostvars[master_host].init_out.token }}"
+    discovery_token_hash: "{{ hostvars[master_host].init_out.discovery_token_hash }}"
+  tasks:                                                          
+    - name: Init Kubernetes Worker
+      slave_init:
+        join_endpoint: "{{ join_endpoint }}"
+        token: "{{ token }}"
+        discovery_token_hash: "{{ discovery_token_hash }}"
+      register: join_out
+    - debug:
+        msg: "Join output: {{ join_out.stdout }}"
+
+- name: install Cilium
+  hosts: masters
+  become: true
+  roles:
+    - install-cilium
+  vars:
+    ansible_become_password: "{{ secret }}"
+    cilium_version: "{{ cilium_version_args }}"              
+    cilium_cluster_cidr: "{{ master_cidr_args }}" 
