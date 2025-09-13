@@ -3,10 +3,9 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import torch.nn as nn
-import numpy as np
 import logging
 
-LAYER_CONTROLLER_URL = "http://localhost:32323"
+LAYER_CONTROLLER_URL = "http://172.0.0.100:32323"
 # 数据加载
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -26,7 +25,7 @@ criterion = nn.CrossEntropyLoss()
 
 learning_rate = 0.001  # 假設的學習率
 
-model_path = "./model"
+model_path = "./model.pth"
 
 input_size = (1, 28, 28)  # MNIST 圖像大小
 

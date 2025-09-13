@@ -1,0 +1,9 @@
+helm_get_url: https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+helm_script: get_helm.sh
+
+nvidia_repo_name: nvidia
+nvidia_repo_url: https://helm.ngc.nvidia.com/nvidia
+
+gpu_operator_namespace: gpu-operator
+gpu_operator_chart: nvidia/gpu-operator
+gpu_operator_version: v25.3.1

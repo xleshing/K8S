@@ -1,0 +1,2 @@
+cilium_version: "1.17.5"
+cilium_cluster_cidr: "10.0.0.0/16"
