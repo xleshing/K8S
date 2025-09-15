@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lf-api
+  namespace: load-forecast
+spec:
+  selector: { app: lf-api }
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP

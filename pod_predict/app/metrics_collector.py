@@ -1,24 +1,28 @@
+import os
 import time
-import pymysql
+import logging
 from datetime import datetime
+
+import pymysql
 from kubernetes import client, config
 from kubernetes.client import CustomObjectsApi
-import logging
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[logging.StreamHandler()]
 )
+
 def get_connection():
     return pymysql.connect(
-        host='mysql',
-        user='root',
-        password='rootpass',
-        database='podmetrics',
+        host=os.getenv('DB_HOST', 'mysql'),
+        user=os.getenv('DB_USER', 'root'),
+        password=os.getenv('DB_PASSWORD', 'rootpass'),
+        database=os.getenv('DB_NAME', 'podmetrics'),
         cursorclass=pymysql.cursors.DictCursor
     )
 
+# in-cluster 優先，否則用 kubeconfig（方便本地測試）
 try:
     config.load_incluster_config()
 except:
@@ -69,7 +73,7 @@ def collect_pod_cpu_usage(namespaces):
                     cpu_total += cpu_val
                 usage_per_pod[f"{pod_namespace}/{pod_name}"] = cpu_total
         except Exception as e:
-            print(f"Error getting metrics for {ns}: {e}")
+            logging.error(f"Error getting metrics for {ns}: {e}")
     return usage_per_pod
 
 def store_cpu_usages(pod_usages):
@@ -99,15 +103,17 @@ def remove_disappeared_pods(current_pods):
 
 def run(interval=60):
     init_db()
+    targets = os.getenv("COLLECT_NAMESPACES", "default").split(",")
+    targets = [t.strip() for t in targets if t.strip()]
     while True:
         try:
-            pod_usages = collect_pod_cpu_usage(["default"])
+            pod_usages = collect_pod_cpu_usage(targets)
             store_cpu_usages(pod_usages)
             remove_disappeared_pods(list(pod_usages.keys()))
             logging.info(f"Collected and cleaned {len(pod_usages)} pods")
         except Exception as e:
-            logging.error(f"Error getting metrics: {e}")
-        time.sleep(interval)
+            logging.error(f"Collector loop error: {e}")
+        time.sleep(int(os.getenv("COLLECT_INTERVAL", "60")))
 
 if __name__ == "__main__":
     run()

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lf-collector
+  namespace: load-forecast
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: lf-collector }
+  template:
+    metadata:
+      labels: { app: lf-collector }
+    spec:
+      serviceAccountName: metrics-collector
+      containers:
+        - name: collector
+          image: YOUR_REG/lf-collector:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: lf-config }
+            - secretRef: { name: lf-mysql }
+          env:
+            - name: DB_HOST
+              valueFrom: { configMapKeyRef: { name: lf-config, key: DB_HOST } }
+            - name: DB_NAME
+              valueFrom: { configMapKeyRef: { name: lf-config, key: DB_NAME } }
+            - name: DB_USER
+              valueFrom: { secretKeyRef: { name: lf-mysql, key: DB_USER } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: lf-mysql, key: DB_PASSWORD } }
+            - name: COLLECT_NAMESPACES
+              valueFrom: { configMapKeyRef: { name: lf-config, key: COLLECT_NAMESPACES } }
+            - name: COLLECT_INTERVAL
+              valueFrom: { configMapKeyRef: { name: lf-config, key: COLLECT_INTERVAL } }
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+          livenessProbe:
+            exec: { command: ["sh", "-c", "ps aux | grep -v grep | grep metrics_collector.py"] }
+            initialDelaySeconds: 20
+            periodSeconds: 30

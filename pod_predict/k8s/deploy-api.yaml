@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lf-api
+  namespace: load-forecast
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: lf-api }
+  template:
+    metadata:
+      labels: { app: lf-api }
+    spec:
+      containers:
+        - name: api
+          image: YOUR_REG/lf-api:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: lf-config }
+            - secretRef: { name: lf-mysql }
+          env:
+            - name: DB_HOST
+              valueFrom: { configMapKeyRef: { name: lf-config, key: DB_HOST } }
+            - name: DB_NAME
+              valueFrom: { configMapKeyRef: { name: lf-config, key: DB_NAME } }
+            - name: DB_USER
+              valueFrom: { secretKeyRef: { name: lf-mysql, key: DB_USER } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: lf-mysql, key: DB_PASSWORD } }
+            - name: MODEL_DIR
+              value: "/models"
+          ports:
+            - name: http
+              containerPort: 5000
+          volumeMounts:
+            - name: models
+              mountPath: /models
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+          readinessProbe:
+            httpGet: { path: "/history?pod=dummy/dummy", port: 5000 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: { path: "/", port: 5000 }
+            initialDelaySeconds: 20
+            periodSeconds: 30
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: lf-models-pvc

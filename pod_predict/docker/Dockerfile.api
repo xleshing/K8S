@@ -1,0 +1,16 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+COPY app/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app/lstm_model.py /app/lstm_model.py
+COPY app/api_server.py /app/api_server.py
+
+ENV PYTHONUNBUFFERED=1
+ENV MODEL_DIR=/models
+VOLUME ["/models"]
+
+# 生產模式用 gunicorn
+EXPOSE 5000
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "api_server:app"]

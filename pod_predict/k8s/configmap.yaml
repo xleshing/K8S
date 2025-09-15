@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lf-config
+  namespace: load-forecast
+data:
+  DB_HOST: "mysql"          # 改為你的 MySQL 服務 DNS
+  DB_NAME: "podmetrics"
+  COLLECT_NAMESPACES: "default"   # 逗號分隔
+  COLLECT_INTERVAL: "60"
+  TRAIN_INTERVAL: "60"
+  EPOCHS_PER_TICK: "1"
+  SCALER_WINDOW: "1000"
+  CHECKPOINT_EVERY: "10"
+  SEQ_LEN: "30"
