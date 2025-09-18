@@ -1,0 +1,8 @@
+Flask
+gunicorn
+torch
+pandas
+numpy
+scikit-learn
+kubernetes
+pymysql
